@@ -107,15 +107,18 @@ simulated function UpdateData(optional int Index = -1, optional bool bDisableEdi
 		TheSoldierPanel = none;
 		EquipmentItems.Length = 0;
 		SmallItems.Length = 0;
-		// spawn list items, then start over
 
-		if (class'robojumper_SquadSelectConfig'.static.IsCHHLMinVersionInstalled(1, 9))
+		// Assuming that civilian units don't have an inventory
+		if (!Unit.IsCivilian())
 		{
-			SetupItemsHighlander();
-		}
-		else
-		{
-			SetupItemsRegular();
+			if (class'robojumper_SquadSelectConfig'.static.IsCHHLMinVersionInstalled(1, 9))
+			{
+				SetupItemsHighlander();
+			}
+			else
+			{
+				SetupItemsRegular();
+			}
 		}
 
 		TheSoldierPanel = robojumper_UISquadSelect_SoldierPanel(Spawn(class'robojumper_UISquadSelect_SoldierPanel', TheList.itemContainer).InitPanel());
@@ -128,7 +131,8 @@ simulated function UpdateData(optional int Index = -1, optional bool bDisableEdi
 			TheStatsPanel.UpdateData();
 		}
 
-		if (class'robojumper_SquadSelectConfig'.static.ShowMeTheSkills())
+		// Only Soldiers have skills
+		if (class'robojumper_SquadSelectConfig'.static.ShowMeTheSkills() && Unit.IsSoldier())
 		{
 			TheSkillsPanel = robojumper_UISquadSelect_SkillsPanel(Spawn(class'robojumper_UISquadSelect_SkillsPanel', self).InitPanel());
 			TheSkillsPanel.UpdateData();
@@ -563,7 +567,7 @@ simulated function OnClickedEditUnitButton()
 
 	XComHQ = class'UIUtilities_Strategy'.static.GetXComHQ();
 
-	if(!XComHQ.IsObjectiveCompleted('T0_M3_WelcomeToHQ') || bDisabledEdit)
+	if(!XComHQ.IsObjectiveCompleted('T0_M3_WelcomeToHQ') || bDisabledEdit || GetUnit().IsCivilian())
 	{
 		class'UIUtilities_Sound'.static.PlayNegativeSound();
 		return;

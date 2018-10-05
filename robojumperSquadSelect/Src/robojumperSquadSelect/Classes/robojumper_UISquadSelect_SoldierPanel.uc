@@ -1,5 +1,11 @@
 // this is the bottom soldier panel with name, nick, class, rank and two buttons
-class robojumper_UISquadSelect_SoldierPanel extends UIPanel;
+class robojumper_UISquadSelect_SoldierPanel extends UIPanel config(robojumperSquadSelect);
+
+struct ExtraCharacterData
+{
+	var name CharacterTemplateName;
+	var string ClassIconPath;
+};
 
 var UIList List;
 var UIPanel BGBox;
@@ -25,6 +31,8 @@ var UIImage DismissImage;
 var UIImage ControllerButtonImage;
 
 var UIBondIcon BondIcon;
+
+var config array<ExtraCharacterData> CharData;
 
 // Override InitPanel to run important listItem specific logic
 simulated function UIPanel InitPanel(optional name InitName, optional name InitLibID)
@@ -180,7 +188,7 @@ simulated function UpdateData(bool bDisableEdit, bool bDisableDismiss)
 		NickText.SetText(class'UIUtilities_Text'.static.GetColoredText(class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(Unit.GetName(eNameType_Nick)), eUIState_Header, 28));
 		NameText.SetText(class'UIUtilities_Text'.static.GetColoredText(class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(NameStr), eUIState_Normal, 22));
 		// this accounts for CH / LWHL changes to rank text
-		RankText.SetText(class'UIUtilities_Text'.static.GetColoredText(class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(Unit.GetName(eNameType_Rank)), eUIState_Normal, 18));
+		RankText.SetText(class'UIUtilities_Text'.static.GetColoredText(class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(Unit.IsSoldier() ? Unit.GetName(eNameType_Rank) : ""), eUIState_Normal, 18));
 		if (!class'robojumper_SquadSelectConfig'.static.ShouldShowStats())
 		{
 			strStatLabel = "H:" $ class'UIUtilities_Text'.static.GetColoredText(Health $"/"$ MaxHealth, (Health < MaxHealth) ? eUIState_Bad : eUIState_Normal, 22);
@@ -197,7 +205,7 @@ simulated function UpdateData(bool bDisableEdit, bool bDisableDismiss)
 			}
 			HealthText.SetText(class'UIUtilities_Text'.static.AlignRight(strStatLabel));
 		}
-		PromoteImage.SetVisible(Unit.ShowPromoteIcon());
+		PromoteImage.SetVisible(Unit.IsSoldier() && Unit.ShowPromoteIcon());
 		if (PCSAvailabilityData.bHasGTS && PCSAvailabilityData.bHasAchievedCombatSimsRank && PCSAvailabilityData.bCanEquipCombatSims)
 		{
 			// our unit has the potential to equip PCS
@@ -220,7 +228,7 @@ simulated function UpdateData(bool bDisableEdit, bool bDisableDismiss)
 
 		RealizeDismissImageState();
 		// Bond icon
-		if(!Unit.GetSoldierClassTemplate().bCanHaveBonds)
+		if(!Unit.IsSoldier() || !Unit.GetSoldierClassTemplate().bCanHaveBonds)
 		{
 			BondIcon.SetBondLevel(-1);
 			BondIcon.RemoveTooltip();
@@ -249,25 +257,52 @@ simulated function UpdateData(bool bDisableEdit, bool bDisableDismiss)
 
 static function string GetRankIcon(int iRank, name ClassName, XComGameState_Unit Unit)
 {
-	return class'UIUtilities_Image'.static.GetRankIcon(Unit.GetRank(), Unit.GetSoldierClassTemplateName());
+	if (Unit.IsSoldier())
+	{
+		return class'UIUtilities_Image'.static.GetRankIcon(Unit.GetRank(), Unit.GetSoldierClassTemplateName());
+	}
+	else
+	{
+		return "";
+	}
 }
 
 static function string GetClassIcon(XComGameState_Unit Unit)
 {
-	if (class'robojumper_SquadSelectConfig'.static.IsCHHLMinVersionInstalled(1, 5))
+	local int i;
+	if (Unit.IsSoldier())
 	{
-		return Unit.GetSoldierClassIcon();
+		if (class'robojumper_SquadSelectConfig'.static.IsCHHLMinVersionInstalled(1, 5))
+		{
+			return Unit.GetSoldierClassIcon();
+		}
+		return Unit.GetSoldierClassTemplate().IconImage;
 	}
-	return Unit.GetSoldierClassTemplate().IconImage;
+	else
+	{
+		i = default.CharData.Find('CharacterTemplateName', Unit.GetMyTemplateName());
+		if (i != INDEX_NONE)
+		{
+			return default.CharData[i].ClassIconPath;
+		}
+		return "";
+	}
 }
 
 static function string GetClassDisplayName(XComGameState_Unit Unit)
 {
-	if (class'robojumper_SquadSelectConfig'.static.IsCHHLMinVersionInstalled(1, 5))
+	if (Unit.IsSoldier())
 	{
-		return Unit.GetSoldierClassDisplayName();
+		if (class'robojumper_SquadSelectConfig'.static.IsCHHLMinVersionInstalled(1, 5))
+		{
+			return Unit.GetSoldierClassDisplayName();
+		}
+		return Unit.GetSoldierClassTemplate().DisplayName;
 	}
-	return Unit.GetSoldierClassTemplate().DisplayName;
+	else
+	{
+		return Unit.GetMyTemplate().strCharacterName;
+	}
 }
 
 simulated function OnClickBondIcon(UIBondIcon Icon)
