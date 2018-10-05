@@ -16,8 +16,10 @@
     <Folder Include="Localization\" />
     <Folder Include="Content" />
     <Folder Include="Src\" />
+    <Folder Include="Src\LW_Tuple\Classes" />
     <Folder Include="Src\ModConfigMenuAPI" />
     <Folder Include="Src\ModConfigMenuAPI\Classes" />
+    <Folder Include="Src\LW_Tuple" />
     <Folder Include="Src\robojumperSquadSelect\" />
     <Folder Include="Src\robojumperSquadSelect\Classes\" />
   </ItemGroup>
@@ -48,6 +50,9 @@
     <Content Include="Config\XComEngine.ini" />
     <Content Include="Config\XComGame.ini" />
     <Content Include="Localization\XComGame.int" />
+    <Content Include="Src\LW_Tuple\Classes\LWTuple.uc">
+      <SubType>Content</SubType>
+    </Content>
     <Content Include="Src\ModConfigMenuAPI\Classes\MCM_API.uc">
       <SubType>Content</SubType>
     </Content>
