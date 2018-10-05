@@ -24,9 +24,7 @@ var UIPanel RemoveButton;
 var UIImage DismissImage;
 var UIImage ControllerButtonImage;
 
-`if(`isdefined(WITH_WOTC))
 var UIBondIcon BondIcon;
-`endif
 
 // Override InitPanel to run important listItem specific logic
 simulated function UIPanel InitPanel(optional name InitName, optional name InitLibID)
@@ -110,11 +108,7 @@ simulated function UIPanel InitPanel(optional name InitName, optional name InitL
 	HealthText.InitText();
 	HealthText.SetY(70);
 
-`if(`isdefined(WITH_WOTC))
 	HealthText.SetWidth(width);
-`else
-	HealthText.SetWidth(width - iRightButtonWidth);
-`endif
 
 
 	RemoveButton = Spawn(class'UIPanel', self);
@@ -122,14 +116,8 @@ simulated function UIPanel InitPanel(optional name InitName, optional name InitL
 	RemoveButton.bAnimateOnInit = false;
 	RemoveButton.InitPanel('', 'X2Button');
 
-`if(`isdefined(WITH_WOTC))
 	RemoveButton.SetX(width * 2.0f / 3.0f);
 	RemoveButton.SetSize(width / 3.0f, 24);
-`else
-	RemoveButton.SetX(width - iRightButtonWidth);
-	RemoveButton.SetSize(iRightButtonWidth, Height);
-`endif
-
 
 	RemoveButton.ProcessMouseEvents(OnRemoveButtonMouseEvent);
 	DismissImage = Spawn(class'UIImage', RemoveButton);
@@ -139,35 +127,20 @@ simulated function UIPanel InitPanel(optional name InitName, optional name InitL
 	removeIconSize = Min(RemoveButton.Width, RemoveButton.Height) / 1.5f;
 
 	DismissImage.SetSize(removeIconSize, removeIconSize);
-`if(`isdefined(WITH_WOTC))
 	DismissImage.SetY((RemoveButton.Height - removeIconSize) / 2);
-`else
-	DismissImage.SetX((RemoveButton.Width - removeIconSize) / 2);
-`endif
-	if (true)
-	{
-		ControllerButtonImage = Spawn(class'UIImage', RemoveButton);
-		ControllerButtonImage.bAnimateOnInit = false;
-		ControllerButtonImage.InitImage('', "img:///gfxComponents." $ class'UIUtilities_Input'.static.GetGamepadIconPrefix() $ class'UIUtilities_Input'.const.ICON_Y_TRIANGLE);
-		ControllerButtonImage.SetSize(removeIconSize, removeIconSize);
-`if(`isdefined(WITH_WOTC))
-		ControllerButtonImage.SetY((RemoveButton.Height - removeIconSize) / 2);
-`else
-		ControllerButtonImage.SetX((RemoveButton.Width - removeIconSize) / 2);
-`endif
-		ControllerButtonImage.Hide();
-	}
-	else
-	{
-		DismissImage.SetY(32);
-	}
+
+	ControllerButtonImage = Spawn(class'UIImage', RemoveButton);
+	ControllerButtonImage.bAnimateOnInit = false;
+	ControllerButtonImage.InitImage('', "img:///gfxComponents." $ class'UIUtilities_Input'.static.GetGamepadIconPrefix() $ class'UIUtilities_Input'.const.ICON_Y_TRIANGLE);
+	ControllerButtonImage.SetSize(removeIconSize, removeIconSize);
+	ControllerButtonImage.SetY((RemoveButton.Height - removeIconSize) / 2);
+	ControllerButtonImage.Hide();
+
 	RealizeDismissImageState();
 
-`if(`isdefined(WITH_WOTC))
 	BondIcon = Spawn(class'UIBondIcon', self).InitBondIcon('bondIconMC', , OnClickBondIcon);
 	BondIcon.SetPanelScale(0.5);
 	BondIcon.SetPosition(Width - BondIcon.Width / 2, 26);
-`endif
 
 	return self;
 }
@@ -178,12 +151,10 @@ simulated function UpdateData(bool bDisableEdit, bool bDisableDismiss)
 	local string NameStr;
 	local int Health, MaxHealth;
 	local string strStatLabel;
-`if(`isdefined(WITH_WOTC))
 	local int Will, MaxWill;
 	local EUIState WillState;
 	local SoldierBond BondData;
 	local StateObjectReference BondmateRef;
-`endif
 	local TPCSAvailabilityData PCSAvailabilityData;
 	local array<XComGameState_Item> EquippedImplants;
 
@@ -197,9 +168,7 @@ simulated function UpdateData(bool bDisableEdit, bool bDisableDismiss)
 			NameStr = Unit.GetName(eNameType_First);
 		}
 		class'robojumper_SquadSelect_Helpers'.static.GetCurrentAndMaxStatForUnit(Unit, eStat_HP, Health, MaxHealth);
-`if(`isdefined(WITH_WOTC))
 		class'robojumper_SquadSelect_Helpers'.static.GetCurrentAndMaxStatForUnit(Unit, eStat_Will, Will, MaxWill);
-`endif
 
 		class'UIUtilities_Strategy'.static.GetPCSAvailability(Unit, PCSAvailabilityData);
 
@@ -215,7 +184,6 @@ simulated function UpdateData(bool bDisableEdit, bool bDisableDismiss)
 		if (!class'robojumper_SquadSelectConfig'.static.ShouldShowStats())
 		{
 			strStatLabel = "H:" $ class'UIUtilities_Text'.static.GetColoredText(Health $"/"$ MaxHealth, (Health < MaxHealth) ? eUIState_Bad : eUIState_Normal, 22);
-`if(`isdefined(WITH_WOTC))
 			if (class'robojumper_SquadSelect_Helpers'.static.UnitParticipatesInWillSystem(Unit))
 			{
 				if (float(Will) / float(MaxWill) < 0.33f)
@@ -227,7 +195,6 @@ simulated function UpdateData(bool bDisableEdit, bool bDisableDismiss)
 
 				strStatLabel $= "; W:" $ class'UIUtilities_Text'.static.GetColoredText(Will $"/"$ MaxWill, WillState, 22);
 			}
-`endif
 			HealthText.SetText(class'UIUtilities_Text'.static.AlignRight(strStatLabel));
 		}
 		PromoteImage.SetVisible(Unit.ShowPromoteIcon());
@@ -253,7 +220,6 @@ simulated function UpdateData(bool bDisableEdit, bool bDisableDismiss)
 
 		RealizeDismissImageState();
 		// Bond icon
-`if(`isdefined(WITH_WOTC))
 		if(!Unit.GetSoldierClassTemplate().bCanHaveBonds)
 		{
 			BondIcon.SetBondLevel(-1);
@@ -278,49 +244,32 @@ simulated function UpdateData(bool bDisableEdit, bool bDisableDismiss)
 				BondIcon.SetTooltipText(class'UISoldierBondScreen'.default.BondTitle);
 			}
 		}
-`endif
 	}
 }
 
 static function string GetRankIcon(int iRank, name ClassName, XComGameState_Unit Unit)
 {
-`if(`notdefined(WITH_WOTC))
-	if (class'robojumper_SquadSelectConfig'.static.IsLWHLMinVersionInstalled(1, 0))
-	{
-		return class'LWUtilities_Ranks'.static.GetRankIcon(iRank, ClassName, Unit);
-	}
-	else
-	{
-`endif
-		return class'UIUtilities_Image'.static.GetRankIcon(Unit.GetRank(), Unit.GetSoldierClassTemplateName());
-`if(`notdefined(WITH_WOTC))
-	}
-`endif
+	return class'UIUtilities_Image'.static.GetRankIcon(Unit.GetRank(), Unit.GetSoldierClassTemplateName());
 }
 
 static function string GetClassIcon(XComGameState_Unit Unit)
 {
-`if(`isdefined(WITH_WOTC))
 	if (class'robojumper_SquadSelectConfig'.static.IsCHHLMinVersionInstalled(1, 5))
 	{
 		return Unit.GetSoldierClassIcon();
 	}
-`endif
 	return Unit.GetSoldierClassTemplate().IconImage;
 }
 
 static function string GetClassDisplayName(XComGameState_Unit Unit)
 {
-`if(`isdefined(WITH_WOTC))
 	if (class'robojumper_SquadSelectConfig'.static.IsCHHLMinVersionInstalled(1, 5))
 	{
 		return Unit.GetSoldierClassDisplayName();
 	}
-`endif
 	return Unit.GetSoldierClassTemplate().DisplayName;
 }
 
-`if(`isdefined(WITH_WOTC))
 simulated function OnClickBondIcon(UIBondIcon Icon)
 {
 	local XComGameState_Unit UnitState;
@@ -341,8 +290,6 @@ simulated function GoBond()
 	`HQPRES.UIArmory_MainMenu(UISquadSelect(Screen).XComHQ.Squad[UISquadSelect(screen).m_iSelectedSlot]);
 	`HQPRES.UISoldierBonds(GetUnit().GetReference());
 }
-`endif
-
 
 simulated function SetBGColor(bool focused)
 {
@@ -363,9 +310,7 @@ simulated function OnLoseFocus()
 
 simulated function SetNavigatorFocus()
 {
-	// no navigation!
-//	List.SetSelectedItem(self);
-	robojumper_UISquadSelect_ListItem(GetParent(class'robojumper_UISquadSelect_ListItem', true)).SetNavigatorFocus();
+	robojumper_UISquadSelect_ListItem(GetParent(class'robojumper_UISquadSelect_ListItem', true)).SetSelectedNavigation();
 }
 
 simulated function XComGameState_Unit GetUnit()

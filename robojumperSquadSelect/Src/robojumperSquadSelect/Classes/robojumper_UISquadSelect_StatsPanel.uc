@@ -62,9 +62,7 @@ simulated function UpdateData()
 		{
 			// for HP, show current "/" max stat
 			if (Stat == eStat_HP
-`if(`isdefined(WITH_WOTC))
 				|| (Stat == eStat_Will && class'robojumper_SquadSelect_Helpers'.static.UnitParticipatesInWillSystem(UnitState))
-`endif
 				)
 			{
 				class'robojumper_SquadSelect_Helpers'.static.GetCurrentAndMaxStatForUnit(UnitState, Stat, CurrStat, MaxStat);
@@ -156,7 +154,7 @@ simulated function OnBGMouseEvent(UIPanel control, int cmd)
 		case class'UIUtilities_Input'.const.FXS_L_MOUSE_IN:
 			OnReceiveFocus();
 			control.OnReceiveFocus();
-			robojumper_UISquadSelect_ListItem(GetParent(class'robojumper_UISquadSelect_ListItem', true)).SetNavigatorFocusSelectSoldierPanel();
+			robojumper_UISquadSelect_ListItem(GetParent(class'robojumper_UISquadSelect_ListItem', true)).SetSelectedNavigationSoldierPanel();
 			break;
 		case class'UIUtilities_Input'.const.FXS_L_MOUSE_OUT:
 			OnLoseFocus();

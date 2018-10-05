@@ -10,11 +10,7 @@ var localized string strLabel;
 var localized string strGroupTitle;
 
 var localized string strShowWeaponUpgradeIcons, strSkipSecondaryUpgradeIconsAvailable, strShowBGImages, strShowMeTheSkills, strSkipInitialAbilities, strAutofillSquad, strShowStats, strDisallowInfiniteScrolling;
-
-`if(`isdefined(WITH_WOTC))
 var localized string strHideTrainingCenterButton;
-`endif
-
 
 var localized string strSquadSize;
 var config int iSquadSizeMin, iSquadSizeMax;
@@ -23,9 +19,7 @@ var localized string strSquadSizeSpawnWarning;
 var config array<name> SpawnPointFixingMods;
 
 var bool bShowWeaponUpgradeIcons, bSkipSecondaryUpgradeIconsAvailable, bShowBGImages, bShowMeTheSkills, bSkipInitialAbilities, bAutofillSquad, bShowMeTheStats, bDisallowInfiniteScrolling;
-`if(`isdefined(WITH_WOTC))
 var bool bHideTrainingCenterButton;
-`endif
 
 
 var int ch_iMaxSoldiers;
@@ -66,9 +60,7 @@ simulated function ClientModCallback(MCM_API_Instance ConfigAPI, int GameMode)
 	bShowMeTheStats = class'robojumper_SquadSelectConfig'.static.ShouldShowStats();
 	bAutofillSquad = class'robojumper_SquadSelectConfig'.static.ShouldAutoFillSquad();
 	bDisallowInfiniteScrolling = class'robojumper_SquadSelectConfig'.static.DisAllowInfiniteScrolling();
-`if(`isdefined(WITH_WOTC))
 	bHideTrainingCenterButton = class'robojumper_SquadSelectConfig'.static.HideTrainingCenterButton();
-`endif
 
 	ch_iMaxSoldiers = class'robojumper_SquadSelectConfig'.static.GetSquadSize();
 
@@ -83,9 +75,7 @@ simulated function ClientModCallback(MCM_API_Instance ConfigAPI, int GameMode)
 	Group.AddCheckbox(SKIP_SQUADDIE_ABILITIES, strSkipInitialAbilities, "", bSkipInitialAbilities, , CheckboxSaveHandler).SetEditable(bShowMeTheSkills);
 
 	Group.AddCheckbox(SHOW_STATS, strShowStats, "", bShowMeTheStats, , CheckboxSaveHandler);
-`if(`isdefined(WITH_WOTC))
 	Group.AddCheckbox(HIDE_TRAINING_CENTER, strHideTrainingCenterButton, "", bHideTrainingCenterButton, , CheckboxSaveHandler).SetEditable(bShowMeTheStats);
-`endif
 
 	Group.AddCheckbox(AUTO_FILL_SQUAD, strAutofillSquad, "", bAutofillSquad, , CheckboxSaveHandler);
 	
@@ -127,15 +117,11 @@ simulated function CheckboxSaveHandler(MCM_API_Setting _Setting, bool _SettingVa
 			break;
 		case SHOW_STATS:
 			bShowMeTheStats = _SettingValue;
-`if(`isdefined(WITH_WOTC))
 			_Setting.GetParentGroup().GetSettingByName(HIDE_TRAINING_CENTER).SetEditable(_SettingValue);
-`endif
 			break;
-`if(`isdefined(WITH_WOTC))
 		case HIDE_TRAINING_CENTER:
 			bHideTrainingCenterButton = _SettingValue;
 			break;
-`endif
 		case AUTO_FILL_SQUAD:
 			bAutofillSquad = _SettingValue;
 			break;
@@ -164,9 +150,7 @@ simulated function SaveButtonClicked(MCM_API_SettingsPage Page)
 	DefObj.bSkipInitialAbilities = bSkipInitialAbilities;
 	DefObj.bAutofillSquad = bAutofillSquad;
 	DefObj.bShowStats = bShowMeTheStats;
-`if(`isdefined(WITH_WOTC))
 	DefObj.bHideTrainingCenterButton = bHideTrainingCenterButton;
-`endif
 	DefObj.bDisallowInfiniteScrolling = bDisallowInfiniteScrolling;
 	DefObj.iSquadSize = ch_iMaxSoldiers;
 	class'robojumper_SquadSelectConfig'.static.StaticSaveConfig();

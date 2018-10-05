@@ -20,7 +20,7 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 
 simulated function SetActorPawn(Actor NewPawn, optional Rotator NewRotation)
 {
-	`REDSCREEN("robojumper_UIMouseGuard_SquadSelect does not rotate pawns");
+	//`REDSCREEN("robojumper_UIMouseGuard_SquadSelect does not rotate pawns");
 }
 
 simulated function OnUpdate()
@@ -38,11 +38,11 @@ simulated function OnUpdate()
 		MouseDelta = Movie.Pres.m_kUIMouseCursor.m_v2MouseFrameDelta;
 		if( `ISCONTROLLERACTIVE )
 		{
-			fChange -= 1.0 * OurStickVector.X * StickRotationMultiplier;
+			fChange += 1.0 * OurStickVector.X * StickRotationMultiplier;
 		}
 		else
 		{
-			fChange += 1.0 * MouseDelta.X * mouseMoveScalar;
+			fChange -= 1.0 * MouseDelta.X * mouseMoveScalar;
 		}
 	}
 	
@@ -62,10 +62,10 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 		switch( cmd )
 		{
 		case class'UIUtilities_Input'.const.FXS_MOUSE_SCROLL_DOWN:
-			if(bMouseIn) RotateInPlace(-1);
+			if(bMouseIn) RotateInPlace(1);
 			return true;
 		case class'UIUtilities_Input'.const.FXS_MOUSE_SCROLL_UP:
-			if(bMouseIn) RotateInPlace(1);
+			if(bMouseIn) RotateInPlace(-1);
 			return true;
 		}
 	}

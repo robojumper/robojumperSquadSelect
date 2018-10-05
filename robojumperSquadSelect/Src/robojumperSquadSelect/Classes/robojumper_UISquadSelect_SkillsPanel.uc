@@ -23,10 +23,8 @@ struct AbilityColorData
 
 var config array<AbilityColorData> ColorOverrides;
 
-`if(`isdefined(WITH_WOTC))
 var localized string strTrainingCenter;
 var UIButton TrainingCenterButton;
-`endif
 
 // Override InitPanel to run important listItem specific logic
 simulated function UIPanel InitPanel(optional name InitName, optional name InitLibID)
@@ -49,7 +47,6 @@ simulated function UIPanel InitPanel(optional name InitName, optional name InitL
 	BGBox.Height = -1; // force updates to take effect
 	BGBox.ProcessMouseEvents(OnBGMouseEvent);
 
-`if(`isdefined(WITH_WOTC))
 	if (!class'robojumper_SquadSelectConfig'.static.HideTrainingCenterButton())
 	{
 		TrainingCenterButton = Spawn(class'UIButton', self);
@@ -58,7 +55,6 @@ simulated function UIPanel InitPanel(optional name InitName, optional name InitL
 		TrainingCenterButton.SetWidth(width);
 		TrainingCenterButton.Hide();
 	}
-`endif
 
 	return self;
 }
@@ -67,10 +63,8 @@ simulated function UIPanel InitPanel(optional name InitName, optional name InitL
 simulated function UpdateData()
 {
 	local int i;
-`if(`isdefined(WITH_WOTC))
 	local int iSoldierAP, iPoolAP;
 	local string strButtonText;
-`endif
 	local array<AbilityColorData> Data;
 	Height = 0;
 	
@@ -87,7 +81,6 @@ simulated function UpdateData()
 		// -1 because it's the first, eighth, ... item that causes a new line not the 0th, seventh...
 		Height = 20 + (((Data.Length - 1) / (iPerksPerLine)) + 1) * (perkSize + perkPadding);
 	}
-`if(`isdefined(WITH_WOTC))
 	if (TrainingCenterButton != none && Height > 0 && `XCOMHQ.HasFacilityByName('RecoveryCenter') && (GetUnit().IsResistanceHero() || GetUnit().GetSoldierClassTemplate().bAllowAWCAbilities))
 	{
 		Height += 20;
@@ -99,7 +92,6 @@ simulated function UpdateData()
 		strButtonText = Repl(strButtonText, "%TOTALPOINTS", iPoolAP);
 		TrainingCenterButton.SetText(strButtonText);
 	}
-`endif
 	BGBox.SetHeight(Height);
 	if (Height == 0)
 	{
@@ -166,18 +158,11 @@ simulated function RemoveSuperfluousAbilities(X2SoldierClassTemplate SoldierClas
 
 	foreach AbilityTree(Ability)
 	{
-`if(`isdefined(WITH_WOTC))
 		if (UnitState.AbilityTree[0].Abilities.Find('AbilityName', Ability.AbilityName) != INDEX_NONE)
 		{
 			AbilitiesToRemove.AddItem(Ability);
 		}
-`else
-		ProgressAbility = SoldierClassTemplate.GetSCATProgressionForAbility(Ability.AbilityName);	
-		if(ProgressAbility.iRank == 0 && ClassesExcemptFromRankFiltering.Find(SoldierClassTemplate.DataName) == INDEX_NONE)
-		{
-			AbilitiesToRemove.AddItem(Ability);
-		}
-`endif
+
 		if (AdditionalRankZeroAbilities.Find(Ability.AbilityName) != INDEX_NONE)
 		{
 			AbilitiesToRemove.AddItem(Ability);
@@ -199,7 +184,6 @@ simulated function bool IsAnAWCPerk(X2AbilityTemplate Ability, XComGameState_Uni
 	local int i, j;
 
 	ClassTemplate = Unit.GetSoldierClassTemplate();
-`if(`isdefined(WITH_WOTC))
 	SoldierRank = ClassTemplate.GetAllPossibleAbilities();
 	for (i = 0; i < SoldierRank.Length; i++)
 	{
@@ -208,19 +192,6 @@ simulated function bool IsAnAWCPerk(X2AbilityTemplate Ability, XComGameState_Uni
 			return false;
 		}
 	}
-`else
-	for (i = 0; i < ClassTemplate.GetMaxConfiguredRank(); i++)
-	{
-		SoldierRank = ClassTemplate.GetAbilityTree(i);
-		for (j = 0; j < SoldierRank.Length; j++)
-		{
-			if (ClassTemplate.GetAbilityName(i, j) == Ability.DataName)
-			{
-				return false;
-			}
-		}
-	}
-`endif
 	// The perk was nowhere to be found, so it's from awc.
 	return true;
 }
@@ -267,7 +238,7 @@ simulated function OnBGMouseEvent(UIPanel control, int cmd)
 		case class'UIUtilities_Input'.const.FXS_L_MOUSE_IN:
 			OnReceiveFocus();
 			control.OnReceiveFocus();
-			robojumper_UISquadSelect_ListItem(GetParent(class'robojumper_UISquadSelect_ListItem', true)).SetNavigatorFocusSelectSoldierPanel();
+			robojumper_UISquadSelect_ListItem(GetParent(class'robojumper_UISquadSelect_ListItem', true)).SetSelectedNavigationSoldierPanel();
 			break;
 		case class'UIUtilities_Input'.const.FXS_L_MOUSE_OUT:
 			OnLoseFocus();
@@ -285,7 +256,6 @@ simulated function OnPromoteClicked()
 	robojumper_UISquadSelect_ListItem(GetParent(class'robojumper_UISquadSelect_ListItem', true)).OnClickedPromote();
 }
 
-`if(`isdefined(WITH_WOTC))
 simulated function OnTrainingCenterButtonClicked(UIButton Button)
 {
 	local XComGameStateHistory History;
@@ -304,7 +274,6 @@ simulated function OnTrainingCenterButtonClicked(UIButton Button)
 		}
 	}
 }
-`endif
 
 defaultproperties
 {

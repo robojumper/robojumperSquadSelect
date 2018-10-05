@@ -60,10 +60,8 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	local GeneratedMissionData MissionData;
 	local XComGameState_MissionSite MissionState;
 	local int listX, maxListWidth;
-`if(`isdefined(WITH_WOTC))
 	local X2SitRepTemplate SitRepTemplate;
 	local XComNarrativeMoment SitRepNarrative;
-`endif
 
 	super(UIScreen).InitScreen(InitController, InitMovie, InitName);
 
@@ -78,7 +76,6 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	MissionData = XComHQ.GetGeneratedMissionData(XComHQ.MissionRef.ObjectID);
 	MissionState = XComGameState_MissionSite(`XCOMHISTORY.GetGameStateForObjectID(XComHQ.MissionRef.ObjectID));
 
-`if(`isdefined(WITH_WOTC))
 	SoldierSlotCount = class'X2StrategyGameRulesetDataStructures'.static.GetMaxSoldiersAllowedOnMission(MissionState);
 	MaxDisplayedSlots = SoldierSlotCount;
 	SquadCount = MissionData.Mission.SquadCount;
@@ -105,15 +102,10 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 			bBlockSkulljackEvent = true;
 		}
 	}
-`else
-	SoldierSlotCount = class'X2StrategyGameRulesetDataStructures'.static.GetMaxSoldiersAllowedOnMission(MissionData.Mission);
-	MaxDisplayedSlots = SoldierSlotCount;
-`endif
 
 	// Enter Squad Select Event
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Enter Squad Select Event Hook");
 	`XEVENTMGR.TriggerEvent('EnterSquadSelect', , , NewGameState);
-`if(`isdefined(WITH_WOTC))
 	if (IsRecoveryBoostAvailable())
 	{
 		`XEVENTMGR.TriggerEvent('OnRecoveryBoostSquadSelect', , , NewGameState);
@@ -146,17 +138,12 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	{
 		`XEVENTMGR.TriggerEvent('OnSuperSizeSquadSelect', , , NewGameState);
 	}
-`endif
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState); 
 	
 	// MAGICK!
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Squad size adjustment from mission parameters");
 	XComHQ = XComGameState_HeadquartersXCom(NewGameState.CreateStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));
-	if (XComHQ.Squad.Length > SoldierSlotCount
-`if(`isdefined(WITH_WOTC))
-		|| XComHQ.AllSquads.Length > 0
-`endif
-	)
+	if (XComHQ.Squad.Length > SoldierSlotCount || XComHQ.AllSquads.Length > 0)
 	{
 		NewGameState.AddStateObject(XComHQ);
 		CollapseSquad(XComHQ);
@@ -164,9 +151,7 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 		{
 			XComHQ.Squad.Length = SoldierSlotCount;
 		}
-`if(`isdefined(WITH_WOTC))
 		XComHQ.AllSquads.Length = 0;
-`endif
 	}
 	// do it like LW2 because why not?
 	`XEVENTMGR.TriggerEvent('OnUpdateSquadSelectSoldiers', XComHQ, XComHQ, NewGameState); // hook to allow mods to adjust who is in the squad
@@ -190,7 +175,7 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 
 	if (SoldierSlotCount < 6)
 	{
-		fScroll = (6 - SoldierSlotCount) / 2;
+		fScroll = -((6.0 - SoldierSlotCount) / 2.0);
 		fInterpGoal = fScroll;
 	}
 
@@ -215,18 +200,12 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 
 	BuildWorldCoordinates();
 
-`if(`isdefined(WITH_WOTC))
 	CreateOrUpdateLaunchButton();
-`else
-	CreateLaunchButton();
-`endif
 
 	UpdateData(class'robojumper_SquadSelectConfig'.static.ShouldAutoFillSquad());
 	UpdateNavHelp();
 	UpdateMissionInfo();
-`if(`isdefined(WITH_WOTC))
 	UpdateSitRep();
-`endif
 
 	if (MissionData.Mission.AllowDeployWoundedUnits)
 	{
@@ -239,7 +218,6 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 
 }
 
-`if(`isdefined(WITH_WOTC))
 function CreateOrUpdateLaunchButton()
 {
 	local string SingleLineLaunch;
@@ -289,47 +267,13 @@ function CreateOrUpdateLaunchButton()
 
 	UpdateNavHelp();
 }
-`else
-simulated function CreateLaunchButton()
-{
-	LaunchButton = Spawn(class'UILargeButton', self);
-	LaunchButton.DisableNavigation();
-	LaunchButton.bAnimateOnInit = false;
 
-	if( `ISCONTROLLERACTIVE )
-	{
-		LaunchButton.InitLargeButton(,class'UIUtilities_Text'.static.InjectImage(
-				class'UIUtilities_Input'.static.GetGamepadIconPrefix() $ class'UIUtilities_Input'.const.ICON_START, 26, 26, -13) @ m_strLaunch @ m_strMission,, OnLaunchMission);
-	}
-	else
-	{
-		LaunchButton.InitLargeButton(, m_strMission, m_strLaunch, OnLaunchMission);
-	}
-
-	LaunchButton.AnchorTopCenter();
-	LaunchButton.DisableNavigation();
-	LaunchButton.ShowBG(true);
-}
-`endif
-
-`if(`isdefined(WITH_WOTC))
 // bsg-jrebar (5/16/17): Select First item and lose/gain focus on first list item
 simulated function SelectFirstListItem()
 {
-/*	if(SquadList.GetItemCount() <= 0 || !SquadList.GetItem(0).bIsInited)
-	{
-		SetTimer(0.2f, false, nameof(SelectFirstListItem)); // Keep trying till we are inited
-	}
-
-	if(SquadList != none)
-	{
-		SquadList.OnLoseFocus(); // Deselect and unvis the whole list
-		SquadList.SelectFirstListItem(); // reselect the selection but go through the lose and receive loop
-		SquadList.OnReceiveFocus(); // refocus the list and its selection
-	}*/
+	// Override, our navigation system is smarter than this
 }
 // bsg-jrebar (5/16/17): end
-`endif
 
 simulated function bool AllowScroll()
 {
@@ -371,9 +315,7 @@ simulated function UpdateData(optional bool bFillSquad)
 	RequiredSpecialSoldiers = MissionData.Mission.SpecialSoldiers;
 
 	MissionState = XComGameState_MissionSite(History.GetGameStateForObjectID(XComHQ.MissionRef.ObjectID));
-`if(`isdefined(WITH_WOTC))
 	bHasRankLimits = MissionState.HasRankLimits(MinRank, MaxRank);
-`endif	
 	// add a unit to the squad if there is one pending
 	if (PendingSoldier.ObjectID > 0 && m_iSelectedSlot != -1)
 		XComHQ.Squad[m_iSelectedSlot] = PendingSoldier;
@@ -441,7 +383,6 @@ simulated function UpdateData(optional bool bFillSquad)
 		UpdateState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Fill Squad");
 		XComHQ = XComGameState_HeadquartersXCom(UpdateState.CreateStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));
 		UpdateState.AddStateObject(XComHQ);
-`if(`isdefined(WITH_WOTC))
 		// Remove tired soldiers from the squad, and remove soldiers that don't fit the rank limits (if they exist)
 		for(i = 0; i < XComHQ.Squad.Length; i++)
 		{
@@ -453,13 +394,11 @@ simulated function UpdateData(optional bool bFillSquad)
 				XComHQ.Squad[i].ObjectID = 0;
 			}
 		}
-`endif
 
 		for(i = 0; i < SoldierSlotCount; i++)
 		{
 			if(XComHQ.Squad.Length == i || XComHQ.Squad[i].ObjectID == 0)
 			{
-`if(`isdefined(WITH_WOTC))
 				if(bHasRankLimits)
 				{
 					UnitState = XComHQ.GetBestDeployableSoldier(true, bAllowWoundedSoldiers, MinRank, MaxRank);
@@ -468,9 +407,6 @@ simulated function UpdateData(optional bool bFillSquad)
 				{
 					UnitState = XComHQ.GetBestDeployableSoldier(true, bAllowWoundedSoldiers);
 				}
-`else
-				UnitState = XComHQ.GetBestDeployableSoldier(true, bAllowWoundedSoldiers);
-`endif		
 
 				if(UnitState != none)
 					XComHQ.Squad[i] = UnitState.GetReference();
@@ -478,16 +414,12 @@ simulated function UpdateData(optional bool bFillSquad)
 		}
 		StoreGameStateChanges();
 
-`if(`isdefined(WITH_WOTC))
 		TriggerEventsForWillStates();
 
 		if (!bBlockSkulljackEvent)
 		{
 			SkulljackEvent();
 		}
-`else
-		SkulljackEvent();
-`endif
 	}
 
 	// This method iterates all soldier templates and empties their backpacks if they are not already empty
@@ -582,11 +514,7 @@ simulated function UpdateNavHelp()
 			NavHelp.AddLeftStackHelp(class'UIPauseMenu'.default.m_sControllerMap, class'UIUtilities_Input'.static.GetGamepadIconPrefix() $ class'UIUtilities_Input'.const.ICON_RSCLICK_R3);
 		}
 
-		if (!bNoCancel
-`if(`isdefined(WITH_WOTC))
-		|| (XComHQ.AllSquads.Length > 0 && XComHQ.AllSquads.Length < (SquadCount))
-`endif
-		)
+		if (!bNoCancel || (XComHQ.AllSquads.Length > 0 && XComHQ.AllSquads.Length < (SquadCount)))
 		{
 			if (!NavHelp.bBackButton)
 			{
@@ -613,22 +541,17 @@ simulated function UpdateNavHelp()
 
 		if (CheatMgr == none || !CheatMgr.bGamesComDemo)
 		{
-`if(`isdefined(WITH_WOTC))
 			if (!`ISCONTROLLERACTIVE)
 			{
-`endif
 				NavHelp.AddCenterHelp(class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(strUnequipSquad), class'UIUtilities_Input'.static.GetGamepadIconPrefix() $class'UIUtilities_Input'.const.ICON_LT_L2,
 					OnUnequipSquad, false, strUnequipSquadTooltip);
 				NavHelp.AddCenterHelp(class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(strUnequipBarracks), class'UIUtilities_Input'.static.GetGamepadIconPrefix() $class'UIUtilities_Input'.const.ICON_RT_R2,
 					OnUnequipBarracks, false, strUnequipBarracksTooltip);
-`if(`isdefined(WITH_WOTC))
 			}
 			else
 			{
 				NavHelp.AddCenterHelp(class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(class'UIManageEquipmentMenu'.default.m_strTitleLabel), class'UIUtilities_Input'.const.ICON_LT_L2);
 			}
-`endif
-
 		}
 
 		if (class'XComGameState_HeadquartersXCom'.static.IsObjectiveCompleted('T0_M5_WelcomeToEngineering'))
@@ -637,7 +560,6 @@ simulated function UpdateNavHelp()
 				OnBuildItems, false, m_strTooltipBuildItems);
 		}
 
-`if(`isdefined(WITH_WOTC))
 		// Add the button for the Recovery Booster if it is available	
 		if(ShowRecoveryBoostButton())
 		{
@@ -647,7 +569,6 @@ simulated function UpdateNavHelp()
 			else
 				`HQPRES.m_kAvengerHUD.NavHelp.AddCenterHelp(m_strBoostSoldier, "", , true, BoostTooltip);
 		}
-`endif
 
 		if (AllowScroll())
 		{
@@ -668,16 +589,13 @@ simulated function UpdateNavHelp()
 	}
 }
 
-`if(`isdefined(WITH_WOTC))
 simulated function OnNextSquad(UIButton Button)
 {
 	if(CurrentSquadHasEnoughSoldiers())
 		bDirty = true;
 	super.OnNextSquad(Button);
 }
-`endif
 
-`if(`isdefined(WITH_WOTC))
 simulated function CloseScreen()
 {
 	if (!bLaunched && XComHQ.AllSquads.Length > 0)
@@ -686,17 +604,12 @@ simulated function CloseScreen()
 	}
 	super.CloseScreen();
 }
-`endif
 
 simulated function bool OnUnrealCommand(int cmd, int arg)
 {
 	local bool bHandled;
 
-	if (!bIsVisible
-`if(`isdefined(WITH_WOTC))
-		|| !bReceivedWalkupEvent
-`endif
-	)
+	if (!bIsVisible || !bReceivedWalkupEvent)
 	{
 		return true;
 	}
@@ -725,32 +638,18 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 		case class'UIUtilities_Input'.static.GetBackButtonInputCode():
 		case class'UIUtilities_Input'.const.FXS_KEY_ESCAPE:
 		case class'UIUtilities_Input'.const.FXS_R_MOUSE_DOWN:
-			if(!bNoCancel
-`if(`isdefined(WITH_WOTC))
-		|| XComHQ.AllSquads.Length > 0
-`endif		
-			)
+			if(!bNoCancel || XComHQ.AllSquads.Length > 0)
 			{
 				CloseScreen();
 				Movie.Pres.PlayUISound(eSUISound_MenuClose);
 			}
 			break;
-`if(`isdefined(WITH_WOTC))
 		case class'UIUtilities_Input'.const.FXS_BUTTON_LTRIGGER:
 			OnManageEquipmentPressed();
 			break;
 		case class'UIUtilities_Input'.const.FXS_BUTTON_RTRIGGER:
 			OnBoostSoldier();
 			break;
-`else
-		case class'UIUtilities_Input'.const.FXS_BUTTON_LTRIGGER:
-			OnUnequipSquad();
-			break;
-
-		case class'UIUtilities_Input'.const.FXS_BUTTON_RTRIGGER:
-			OnUnequipBarracks();
-			break;
-`endif
 		case class'UIUtilities_Input'.const.FXS_BUTTON_LBUMPER:
 			if (class'XComGameState_HeadquartersXCom'.static.IsObjectiveCompleted('T0_M5_WelcomeToEngineering'))
 			{
@@ -779,18 +678,14 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 			}
 
 		case class'UIUtilities_Input'.const.FXS_BUTTON_START:
-`if(`isdefined(WITH_WOTC))
 			if(XComHQ.AllSquads.Length < (SquadCount - 1))
 			{
 				OnNextSquad(LaunchButton);
 			}
 			else
 			{
-`endif
 				OnLaunchMission(LaunchButton);
-`if(`isdefined(WITH_WOTC))
 			}
-`endif
 			break;
 		default:
 			bHandled = false;
@@ -811,13 +706,7 @@ simulated function OnUnequipSquad()
 	DialogData.strCancel = class'UIDialogueBox'.default.m_strDefaultCancelLabel;
 	Movie.Pres.UIRaiseDialog(DialogData);
 }
-simulated function OnUnequipSquadDialogueCallback(
-`if(`isdefined(WITH_WOTC))
-		name eAction
-`else
-		eUIAction eAction
-`endif
-		)
+simulated function OnUnequipSquadDialogueCallback(name eAction)
 {
 	local XComGameStateHistory History;
 	local XComGameState_Unit UnitState;
@@ -828,24 +717,14 @@ simulated function OnUnequipSquadDialogueCallback(
 	local array<XComGameState_Unit> Soldiers;
 	local int idx;
 
-	if(eAction == 
-`if(`isdefined(WITH_WOTC))
-		'eUIAction_Accept'
-`else
-		eUIAction_Accept
-`endif
-	)
+	if(eAction == 'eUIAction_Accept')
 	{
 		History = `XCOMHISTORY;
 		UpdateState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Unequip Squad");
 		XComHQ = XComGameState_HeadquartersXCom(History.GetSingleGameStateObjectForClass(class' XComGameState_HeadquartersXCom'));
 		XComHQ = XComGameState_HeadquartersXCom(UpdateState.CreateStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));
 		UpdateState.AddStateObject(XComHQ);
-		Soldiers = XComHQ.GetSoldiers(false
-`if(`isdefined(WITH_WOTC))		
-		, true
-`endif
-		);
+		Soldiers = XComHQ.GetSoldiers(false	, true);
 
 		RelevantSlots.AddItem(eInvSlot_Armor);
 		RelevantSlots.AddItem(eInvSlot_PrimaryWeapon);
@@ -896,13 +775,7 @@ simulated function OnUnequipBarracks()
 	DialogData.strCancel = class'UIDialogueBox'.default.m_strDefaultCancelLabel;
 	Movie.Pres.UIRaiseDialog(DialogData);
 }
-simulated function OnUnequipBarracksDialogueCallback(
-`if(`isdefined(WITH_WOTC))
-		name eAction
-`else
-		eUIAction eAction
-`endif
-		)
+simulated function OnUnequipBarracksDialogueCallback(name eAction)
 {
 	local XComGameStateHistory History;
 	local XComGameState_Unit UnitState;
@@ -913,24 +786,14 @@ simulated function OnUnequipBarracksDialogueCallback(
 	local array<XComGameState_Unit> Soldiers;
 	local int idx;
 
-	if(eAction == 
-`if(`isdefined(WITH_WOTC))
-		'eUIAction_Accept'
-`else
-		eUIAction_Accept
-`endif
-	)
+	if(eAction == 'eUIAction_Accept')
 	{
 		History = `XCOMHISTORY;
 		UpdateState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Unequip Barracks");
 		XComHQ = XComGameState_HeadquartersXCom(History.GetSingleGameStateObjectForClass(class' XComGameState_HeadquartersXCom'));
 		XComHQ = XComGameState_HeadquartersXCom(UpdateState.CreateStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));
 		UpdateState.AddStateObject(XComHQ);
-		Soldiers = XComHQ.GetSoldiers(true
-`if(`isdefined(WITH_WOTC))		
-		, true
-`endif
-		);
+		Soldiers = XComHQ.GetSoldiers(true, true);
 
 		RelevantSlots.AddItem(eInvSlot_Armor);
 		RelevantSlots.AddItem(eInvSlot_PrimaryWeapon);
@@ -1036,10 +899,8 @@ function ShowLineupUI()
 	local int l, r, visSlots, shownSlots;
 	local float AnimateRate, AnimateValue;
 
-`if(`isdefined(WITH_WOTC))
 	bReceivedWalkupEvent = true; 
 	CheckForWalkupAlerts();
-`endif
 
 	// last chance
 	SquadList.UpdateScroll();
@@ -1187,7 +1048,7 @@ simulated function SquadSelectInterpKeyframe GetPosRotForIndex(int idx)
 	local int a, b;
 	local float f, fakeScroll;
 	local SquadSelectInterpKeyframe RetKeyframe;
-	fakeScroll = fScroll;
+	fakeScroll = -fScroll;
 	while (fakeScroll < 0)
 	{
 		fakeScroll += float(SoldierSlotCount);
@@ -1333,13 +1194,7 @@ simulated function XComUnitPawn CreatePawn(StateObjectReference UnitRef, int ind
 	                                                                
 	UnitPawn.GotoState('CharacterCustomization');
 	                                             
-	UnitPawn.CreateVisualInventoryAttachments(m_kPawnMgr, UnitState, , , 
-`if(`isdefined(WITH_WOTC))
-		true
-`else
-		false
-`endif
-	); // spawn weapons and other visible equipment
+	UnitPawn.CreateVisualInventoryAttachments(m_kPawnMgr, UnitState, , , true); // spawn weapons and other visible equipment
 
 	GremlinPawn = m_kPawnMgr.GetCosmeticPawn(eInvSlot_SecondaryWeapon, UnitRef.ObjectID);
 	if (GremlinPawn != none)

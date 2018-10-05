@@ -40,11 +40,10 @@
     <Content Include="Localization\robojumperSquadSelect.int">
       <SubType>Content</SubType>
     </Content>
-    <Content Include="ModPreview_Alt.jpg">
+    <Content Include="ModPreview.jpg">
       <SubType>Content</SubType>
     </Content>
     <Content Include="ReadMe.txt" />
-    <Content Include="ModPreview.jpg" />
     <Content Include="Config\XComEditor.ini" />
     <Content Include="Config\XComEngine.ini" />
     <Content Include="Config\XComGame.ini" />
@@ -128,9 +127,6 @@
       <SubType>Content</SubType>
     </Content>
     <Content Include="Src\robojumperSquadSelect\Classes\robojumper_UISquadSelect_UtilityItem.uc">
-      <SubType>Content</SubType>
-    </Content>
-    <Content Include="Src\robojumperSquadSelect\Classes\UINavigator_OrientationTrue.uc">
       <SubType>Content</SubType>
     </Content>
     <Content Include="Src\robojumperSquadSelect\Classes\X2DownloadableContentInfo_robojumperSquadSelect.uc" />

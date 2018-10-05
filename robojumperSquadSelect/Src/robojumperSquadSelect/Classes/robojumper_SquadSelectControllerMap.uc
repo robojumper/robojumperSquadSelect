@@ -31,13 +31,8 @@ simulated function LoadDefaultSquadSelect()
 	UIGamePad[8].label = class'UISquadSelect'.default.m_strLaunch @ class'UISquadSelect'.default.m_strMission;
 	UIGamePad[9].label = class'UISquadSelect'.default.m_strBuildItems;
 	UIGamePad[10].label = class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(class'robojumper_UISquadSelect'.default.strSwitchPerspective);
-`if(`isdefined(WITH_WOTC))
 	UIGamePad[11].label = class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(class'UIManageEquipmentMenu'.default.m_strTitleLabel);
 	UIGamePad[12].label = class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(class'robojumper_UISquadSelect'.default.m_strBoostSoldier);
-`else
-	UIGamePad[11].label = class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(class'robojumper_UISquadSelect'.default.strUnequipSquad);
-	UIGamePad[12].label = class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(class'robojumper_UISquadSelect'.default.strUnequipBarracks);
-`endif
 	UIGamePad[13].label = m_sUnused;
 	UIGamePad[14].label = class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(class'UIPauseMenu'.default.m_sControllerMap);
 	UIGamePad[15].label = class'UIUtilities_Text'.default.m_strGenericNavigate;

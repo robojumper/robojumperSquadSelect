@@ -18,7 +18,6 @@ var robojumper_UISquadSelect_StatsPanel TheStatsPanel;
 var bool bSkipRefocus;
 
 
-`if(`isdefined(WITH_WOTC))
 struct SlotPriorityOverride
 {
 	var EInventorySlot Slot;
@@ -26,7 +25,6 @@ struct SlotPriorityOverride
 };
 
 var config array<SlotPriorityOverride> PriorityOverrides;
-`endif
 
 const MAX_SMALLITEMS_IN_ROW = 4;
 
@@ -111,18 +109,14 @@ simulated function UpdateData(optional int Index = -1, optional bool bDisableEdi
 		SmallItems.Length = 0;
 		// spawn list items, then start over
 
-`if(`isdefined(WITH_WOTC))
 		if (class'robojumper_SquadSelectConfig'.static.IsCHHLMinVersionInstalled(1, 9))
 		{
 			SetupItemsHighlander();
 		}
 		else
 		{
-`endif
 			SetupItemsRegular();
-`if(`isdefined(WITH_WOTC))
 		}
-`endif
 
 		TheSoldierPanel = robojumper_UISquadSelect_SoldierPanel(Spawn(class'robojumper_UISquadSelect_SoldierPanel', TheList.itemContainer).InitPanel());
 		TheSoldierPanel.UpdateData(bDisabledEdit, bDisabledDismiss);
@@ -154,7 +148,6 @@ simulated function UpdateData(optional int Index = -1, optional bool bDisableEdi
 	SetDirty(false, false);
 }
 
-`if(`isdefined(WITH_WOTC))
 // Sets up the items using the Highlander's slot functionality
 simulated function SetupItemsHighlander()
 {
@@ -231,7 +224,6 @@ simulated function SetupItemsHighlander()
 		}
 	}
 }
-`endif
 
 // Sets up the items regularly
 simulated function SetupItemsRegular()
@@ -266,11 +258,12 @@ simulated function SetupItemsRegular()
 	// but only if we have utility slots at all [WotC or we are reapers]
 	// causes all sorts of weirdnesses with Navigation
 	// also don't show a locked icon if we have 3 or more slots, not neccessary
-	if (!Unit.HasExtraUtilitySlot() && (iUtilitySlots > 0
-`if(`isdefined(WITH_WOTC))
-	 || Unit.GetResistanceFaction() != none && Unit.GetResistanceFaction().GetMyTemplateName() == 'Faction_Reapers'
-`endif
-	 ) && iUtilitySlots < 3) iVisualLockedSlot = iUtilitySlots++;
+	if (!Unit.HasExtraUtilitySlot()
+		&& (iUtilitySlots > 0 || Unit.GetResistanceFaction() != none && Unit.GetResistanceFaction().GetMyTemplateName() == 'Faction_Reapers') 
+		&& iUtilitySlots < 3)
+	{
+		iVisualLockedSlot = iUtilitySlots++;
+	}
 	iSmallItemSlots = iUtilitySlots;
 	if (Unit.HasAmmoPocket()) iSmallItemSlots++;
 	if (Unit.HasGrenadePocket()) iSmallItemSlots++;
@@ -450,7 +443,7 @@ simulated function OnSelectSoldierMouseEvent(UIPanel control, int cmd)
 	switch( cmd )
 	{
 	case class'UIUtilities_Input'.const.FXS_L_MOUSE_IN:
-		SetNavigatorFocus();
+		SetSelectedNavigation();
 		OnReceiveFocus();
 		break;
 	case class'UIUtilities_Input'.const.FXS_L_MOUSE_OUT:
@@ -497,11 +490,6 @@ simulated function OnReceiveFocus()
 	{
 		TheList.OnReceiveFocus();
 		TheSoldierPanel.RealizeDismissImageState(); // controller
-		// handles cases where we use the mouse to select the soldier panel, which is normally not navigable
-		if (!bSkipRefocus && TheList.GetSelectedItem() == TheSoldierPanel)
-		{
-			TheList.SetSelectedIndex(0);
-		}
 	}
 	else if (DynamicPanel != none)
 	{
@@ -510,18 +498,17 @@ simulated function OnReceiveFocus()
 	}
 }
 
-simulated function SetNavigatorFocus()
+simulated function SetSelectedNavigation()
 {
-	bSkipRefocus = true;
-	robojumper_UIList_SquadEditor(GetParent(class'robojumper_UIList_SquadEditor', true)).SetSelectedItem(self);
-	bSkipRefocus = false;
+	super.SetSelectedNavigation();
+	robojumper_UIList_SquadEditor(GetParent(class'robojumper_UIList_SquadEditor', true)).NavigatorSelectionChangedPanel(self);
 }
 
 // added as a fix for the list item highlighting when selecting extra panels
-simulated function SetNavigatorFocusSelectSoldierPanel()
+simulated function SetSelectedNavigationSoldierPanel()
 {
 	TheList.SetSelectedItem(TheSoldierPanel);
-	SetNavigatorFocus();
+	SetSelectedNavigation();
 }
 
 simulated function OnLoseFocus()

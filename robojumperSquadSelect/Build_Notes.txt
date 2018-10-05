@@ -1,12 +1,3 @@
-This mod is the source of both the vanilla and the WotC version.
-In order to successfully build a WotC version, you need to go into the WotC SrcOrig/Core/Globals.uci macro file and define the following macro like so
-
-	`define WITH_WOTC 1
-
-The presence of this macro is checked at compile time and produces a different script package.
-I do not expect anything in the upk files to be required to be saved again with the WotC Editor -- these are only Texture2Ds
-
-
 Vanilla ModID: 880807907
 Package ID: robojumperSquadSelect.XComMod
 

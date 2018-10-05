@@ -248,7 +248,7 @@ simulated function OnLoseFocus()
 
 simulated function SetNavigatorFocus()
 {
-	robojumper_UISquadSelect_ListItem(GetParent(class'robojumper_UISquadSelect_ListItem', true)).SetNavigatorFocus();
+	robojumper_UISquadSelect_ListItem(GetParent(class'robojumper_UISquadSelect_ListItem', true)).SetSelectedNavigation();
 	List.SetSelectedItem(self);
 }
 
@@ -277,7 +277,6 @@ simulated function string GetSpecialSlotText()
 		case eInvSlot_GrenadePocket:
 			return GetGrenadeLetter();
 		default:
-`if(`isdefined(WITH_WOTC))
 			if (class'robojumper_SquadSelectConfig'.static.IsCHHLMinVersionInstalled(1, 6))
 			{
 				if (class'CHItemSlot'.static.SlotIsTemplated(InvSlot))
@@ -285,7 +284,6 @@ simulated function string GetSpecialSlotText()
 					return class'CHItemSlot'.static.GetTemplateForSlot(InvSlot).GetDisplayLetter();
 				}
 			}
-`endif
 			return "";
 	}
 }

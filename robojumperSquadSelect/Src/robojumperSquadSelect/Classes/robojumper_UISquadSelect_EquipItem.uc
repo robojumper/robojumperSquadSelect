@@ -244,12 +244,10 @@ simulated function GetUpgradeInfo(XComGameState_Item Item, EInventorySlot inInvS
 				{
 					totalSlots++;
 				}
-`if(`isdefined(WITH_WOTC))
 				if (`XCOMHQ.ExtraUpgradeWeaponCats.Find(X2WeaponTemplate(Item.GetMyTemplate()).WeaponCat) != INDEX_NONE)
 				{
 					totalSlots++;
 				}
-`endif
 			}
 		}
 		filledimages = Images.Length;
@@ -414,7 +412,7 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 
 simulated function SetNavigatorFocus()
 {
-	robojumper_UISquadSelect_ListItem(GetParent(class'robojumper_UISquadSelect_ListItem', true)).SetNavigatorFocus();
+	robojumper_UISquadSelect_ListItem(GetParent(class'robojumper_UISquadSelect_ListItem', true)).SetSelectedNavigation();
 	List.SetSelectedItem(self);
 }
 

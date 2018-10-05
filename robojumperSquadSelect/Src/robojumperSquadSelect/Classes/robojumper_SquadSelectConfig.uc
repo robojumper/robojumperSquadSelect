@@ -3,18 +3,13 @@ class robojumper_SquadSelectConfig extends Object config(robojumperSquadSelect_N
 `define DEFOBJ robojumper_SquadSelectConfig(class'Engine'.static.FindClassDefaultObject("robojumperSquadSelect.robojumper_SquadSelectConfig"))
 
 var config bool bShowWeaponUpgradeIcons, bSkipSecondaryUpgradeIconsAvailable, bShowBGImages, bShowMeTheSkills, bSkipInitialAbilities, bAutofillSquad, bShowStats, bDisallowInfiniteScrolling;
-
-`if(`isdefined(WITH_WOTC))
 var config bool bHideTrainingCenterButton;
-`endif
 
 var config int iSquadSize;
 var config int iVersion;
 
 var bool bShowWeaponUpgradeIcons_def, bSkipSecondaryUpgradeIconsAvailable_def, bShowBGImages_def, bShowMeTheSkills_def, bSkipInitialAbilities_def, bAutofillSquad_def, bShowStats_def, bDisallowInfiniteScrolling_def;
-`if(`isdefined(WITH_WOTC))
 var bool bHideTrainingCenterButton_def;
-`endif
 
 var int iVersion_def;
 
@@ -34,9 +29,7 @@ static function Initialize()
 		DefaultObj.bAutofillSquad = default.bAutofillSquad_def;
 		DefaultObj.bShowStats = default.bShowStats_def;
 		DefaultObj.bDisallowInfiniteScrolling = default.bDisallowInfiniteScrolling_def;
-`if(`isdefined(WITH_WOTC))
 		DefaultObj.bHideTrainingCenterButton = default.bHideTrainingCenterButton_def;
-`endif
 		// messes with LW2
 		if (!class'X2DownloadableContentInfo_robojumperSquadSelect'.default.bDontTouchSquadSize)
 		{
@@ -103,36 +96,11 @@ static function bool DisAllowInfiniteScrolling()
 	return default.bDisallowInfiniteScrolling;
 }
 
-`if(`isdefined(WITH_WOTC))
 static function bool HideTrainingCenterButton()
 {
 	return default.bHideTrainingCenterButton;	
 }
-`endif
 
-`if(`notdefined(WITH_WOTC))
-// this would normally check for CH, but since the features in LWHL are a subset of the CH, just check
-// for LWHL
-static function bool IsLWHLMinVersionInstalled(int iMajor, int iMinor)
-{
-	local X2StrategyElementTemplate VersionTemplate;
-
-	VersionTemplate = class'X2StrategyElementTemplateManager'.static.GetStrategyElementTemplateManager().FindStrategyElementTemplate('LWXComGameVersion');
-	if (VersionTemplate == none)
-	{
-		return false;
-	}
-	else
-	{
-		// DANGER TERRITORY
-		// if this runs without the LWHL or equivalent installed, it crashes
-		return LWXComGameVersionTemplate(VersionTemplate).MajorVersion > iMajor ||  (LWXComGameVersionTemplate(VersionTemplate).MajorVersion == iMajor && LWXComGameVersionTemplate(VersionTemplate).MinorVersion >= iMinor);
-	}
-}
-`endif
-
-
-`if(`isdefined(WITH_WOTC))
 static function bool IsCHHLMinVersionInstalled(int iMajor, int iMinor)
 {
 	local X2StrategyElementTemplate VersionTemplate;
@@ -149,7 +117,6 @@ static function bool IsCHHLMinVersionInstalled(int iMajor, int iMinor)
 		return CHXComGameVersionTemplate(VersionTemplate).MajorVersion > iMajor ||  (CHXComGameVersionTemplate(VersionTemplate).MajorVersion == iMajor && CHXComGameVersionTemplate(VersionTemplate).MinorVersion >= iMinor);
 	}
 }
-`endif
 
 defaultproperties
 {
@@ -161,10 +128,7 @@ defaultproperties
 	bAutofillSquad_def=true
 	bShowStats_def=false
 	bDisallowInfiniteScrolling_def=false
-
-`if(`isdefined(WITH_WOTC))
 	bHideTrainingCenterButton_def=false
-`endif
 
 	iVersion_def=1
 }

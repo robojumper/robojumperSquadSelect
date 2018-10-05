@@ -16,7 +16,7 @@ var protected class<UIPanel> ListItemClass;
 var protected int prevIdx;
 
 var protected int maxWidth;
-var protected int maxChildren;
+var protected int visibleChildren;
 
 var protected bool bDisAllowInfiniteScrolling;
 
@@ -35,7 +35,7 @@ simulated function robojumper_UIList_SquadEditor InitSquadList(name InitName, in
 	ItemPadding = iItemPadding;
 	SetPosition(initX, initY);
 	ListItemClass = ItemClass;
-	maxChildren = displayedChildren;
+	visibleChildren = displayedChildren;
 	theWidth = (displayedChildren * (ListItemClass.default.width + ItemPadding)) - ItemPadding;
 	totalWidth = (numChildren * (ListItemClass.default.width + ItemPadding));
 	SetSize(theWidth, 2000);
@@ -46,15 +46,11 @@ simulated function robojumper_UIList_SquadEditor InitSquadList(name InitName, in
 	ItemContainer.bIsNavigable = false;
 	ItemContainer.InitPanel('ListItemContainer');
 	
-	//Navigator = ItemContainer.Navigator.InitNavigator(self); // set owner to be self;
-	Navigator = new(ItemContainer) class'UINavigator_OrientationTrue' (ItemContainer.Navigator);
-	ItemContainer.Navigator = Navigator;
-	UINavigator_OrientationTrue(Navigator).bAllowCyclingOnRepeat = true;
-	Navigator.InitNavigator(self);
+	Navigator = ItemContainer.Navigator.InitNavigator(self); // set owner to be self;
 	Navigator.RemoveControl(ItemContainer); // remove container
-	Navigator.HorizontalNavigation = true;
 	Navigator.LoopSelection = true; //!class'robojumper_SquadSelectConfig'.static.DisAllowInfiniteScrolling(); causes navigation issues
-	Navigator.OnSelectedIndexChanged = NavigatorSelectionChanged;
+	Navigator.OnlyUsesNavTargets = true;
+	//Navigator.OnSelectedIndexChanged = NavigatorSelectionChanged;
 
 	runningX = 0;
 	for (i = 0; i < NumChildren; i++)
@@ -63,14 +59,28 @@ simulated function robojumper_UIList_SquadEditor InitSquadList(name InitName, in
 		runningX += ListItemClass.default.width + ItemPadding;
 	}
 
+	for (i = 0; i < NumChildren; i++)
+	{
+		if (i == 0)
+		{
+			GetItem(NumChildren - 1).Navigator.AddHorizontalNavTarget(GetItem(i));
+		}
+		else
+		{
+			GetItem(i - 1).Navigator.AddHorizontalNavTarget(GetItem(i));
+		}
+	}
+
 	TheMask = Spawn(class'UIMask', self).InitMask('ListMask');
 	TheMask.SetMask(ItemContainer);
 	TheMask.SetSize(Width, Height);
 	TheMask.SetY(-1000);
-	// without this, we somehow enter the navigation cycle without using our navigator at all
-	Navigator.SelectFirstAvailable();
+	if (`ISCONTROLLERACTIVE)
+	{
+		// without this, we somehow enter the navigation cycle without using our navigator at all
+		Navigator.SelectFirstAvailable();
+	}
 	return self;
-
 }
 
 
@@ -85,7 +95,7 @@ simulated function UpdateScroll()
 	fScroll = GetScrollDelegate();
 	LoopScroll(fScroll);
 
-	ContainerX = fScroll * (ListItemClass.default.width + ItemPadding);
+	ContainerX = -fScroll * (ListItemClass.default.width + ItemPadding);
 	// now that just moves stuff out of here
 	ItemContainer.SetX(ContainerX);
 	ReorganizeListItems();
@@ -94,34 +104,27 @@ simulated function UpdateScroll()
 
 simulated function ReorganizeListItems()
 {
-	local int localRunningX, i, step;
-	
-	localRunningX = 0;
+	local int i, step;
+	local int numItems;
 
+	numItems = GetNumItems();
 	step = (ItemPadding + ListItemClass.default.width);
-	i = 0;
-	// fill right
-	while (localRunningX < Width - ItemContainer.X && i < GetNumItems())
+	for (i = 0; i < numItems; i++)
 	{
-		GetItem(i).SetX(localRunningX);
-		localRunningX += step;
-		i++;
-	}
-	// fill left
-	while (i < GetNumItems())
-	{
-		GetItem(i).SetX((i - GetNumItems()) * step);
-		i++;
+		if ((i + 1) * step < -ItemContainer.X)
+		{
+			GetItem(i).SetX((i + numItems) * step);
+		}
+		else
+		{
+			GetItem(i).SetX(i * step);
+		}
 	}
 }
 
-simulated function SetSelectedItem(UIPanel item)
+simulated function NavigatorSelectionChangedPanel(UIPanel panel)
 {
-	if (Navigator.GetSelected() != item)
-	{
-		Navigator.GetSelected().OnLoseFocus();
-		Navigator.SetSelected(item);
-	}
+	NavigatorSelectionChanged(ItemContainer.GetChildIndex(panel));
 }
 
 simulated function NavigatorSelectionChanged(int idx)
@@ -130,7 +133,7 @@ simulated function NavigatorSelectionChanged(int idx)
 	local bool bNavigatedRight; // false = left, true = right
 	local int iHelpIdx;
 
-	if (prevIdx == idx || GetNumItems() <= maxChildren) return;
+	if (prevIdx == idx || GetNumItems() <= visibleChildren) return;
 
 	iHelpIdx = idx;
 	if (Abs(idx + GetNumItems() - prevIdx) < Abs(idx - prevIdx)) iHelpIdx += GetNumItems();
@@ -142,25 +145,24 @@ simulated function NavigatorSelectionChanged(int idx)
 	LoopScroll(scroll);
 	
 	// rightDist is the amount of scroll to apply to the right in order to get idx to show
-	rightDist = idx + scroll - (maxChildren - 1);
-	if (rightDist > GetNumItems()) rightDist -= GetNumItems();
+	rightDist = idx - scroll - (visibleChildren - 1);
+	if (rightDist <= -visibleChildren) rightDist += GetNumItems();
 	// leftDist is the amount of scroll to apply to the left in order to get idx to show
-	leftDist = GetNumItems() - idx - scroll;
-	if (leftDist <= -maxChildren) leftDist += GetNumItems();
+	leftDist = GetNumItems() - idx + scroll;
+	if (leftDist >= GetNumItems()) leftDist -= GetNumItems();
 
 	if (rightDist < 0 || leftDist < 0) return;
 
 	// use the path that won't make us go over the scrolling limit
 	if (bDisAllowInfiniteScrolling)
 	{
-		if (scroll - rightDist >= 0)
+		if (scroll - leftDist >= 0)
 		{
-			ScrollCallback(-rightDist);
+			ScrollCallback(-leftDist);
 		}
 		else
 		{
-			// assert(scroll + leftDist < 6 - maxChildren);
-			ScrollCallback(leftDist);
+			ScrollCallback(rightDist);
 		}
 	}
 	else
@@ -168,15 +170,15 @@ simulated function NavigatorSelectionChanged(int idx)
 		// use the shortest path, or, if both are the same, use the one we scrolled into
 		if (Abs(leftDist - rightDist) < 1)
 		{
-			ScrollCallback(bNavigatedRight ? -rightDist : leftDist);
+			ScrollCallback(bNavigatedRight ? rightDist : -leftDist);
 		}
 		else if (leftDist < rightDist)
 		{
-			ScrollCallback(leftDist);
+			ScrollCallback(-leftDist);
 		}
 		else
 		{
-			ScrollCallback(-rightDist);
+			ScrollCallback(rightDist);
 		}	
 	}
 }
@@ -184,11 +186,14 @@ simulated function NavigatorSelectionChanged(int idx)
 simulated function LoopScroll(out float fScr)
 {
 	local int iMax;
-	iMax = Max(maxChildren, GetNumItems());
-	while (fScr < 0)
-		fScr += iMax;
-	while (fScr >= iMax)
-		fScr -= iMax;
+	iMax = GetNumItems();
+	if (iMax > visibleChildren)
+	{
+		while (fScr < 0)
+			fScr += iMax;
+		while (fScr >= iMax)
+			fScr -= iMax;
+	}
 }
 
 simulated function UIPanel GetItem(int i)
@@ -205,62 +210,7 @@ simulated function int GetItemCount()
 {
 	return GetNumItems();
 }
-/*
-// bsg-jrebar (5/16/17): Gain/Remove focus for first selected item on UI
-simulated function SelectFirstListItem()
-{
-	local UISquadSelect_ListItem ListItem, PrevListItem;
-	local int Index;
-	local bool bFoundIndex;
 
-	// bsg-jrebar (5/30/17): Adding SelectFirst to select the old previously selected item slot or the actual first item in the list
-	PrevListItem = UISquadSelect_ListItem(Navigator.GetSelected());
-
-	if (PrevListItem != none)
-	{
-		PrevListItem.OnLoseFocus();
-	}
-	
-	bFoundIndex = false;
-	ListItem = UISquadSelect_ListItem(Navigator.GetSelected());
-	if(ListItem != none)
-	{
-		bFoundIndex = true;
-		Index = iSelectedIndex;
-	}
-	else
-	{
-	for (Index = 0; Index < GetNumItems(); Index++)
-	{
-		ListItem = UISquadSelect_ListItem(GetItem(Index));
-		if (ListItem != none && !ListItem.bDisabled && ListItem.HasUnit())
-		{
-			bFoundIndex = true;
-			break;
-		}
-	}
-
-	if (!bFoundIndex)
-	{
-		for (Index = 0; Index < GetNumItems(); Index++)
-		{
-			ListItem = UISquadSelect_ListItem(GetItem(Index));
-			if (ListItem != none && !ListItem.bDisabled)
-			{
-				break;
-			}
-		}
-	}
-	}
-	// bsg-jrebar (5/30/17): end
-
-	ListItem.OnReceiveFocus();
-//	ListItem.SetNavigatorFocus();
-
-	iSelectedIndex = Index;
-}
-// bsg-jrebar (5/16/17): end
-*/
 
 simulated function bool OnUnrealCommand(int cmd, int arg)
 {
@@ -270,7 +220,7 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 		return false;
 
 	bHandled = true;
-		
+
 	switch (cmd)
 	{
 		default:
@@ -278,5 +228,4 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 			break;
 	}
 	return bHandled || Navigator.OnUnrealCommand(cmd, arg);
-
 }
