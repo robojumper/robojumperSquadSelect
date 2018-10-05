@@ -1091,6 +1091,25 @@ simulated function UpdateScroll()
 	SquadList.UpdateScroll();
 }
 
+// Unused in vanilla, override for consistency though
+simulated function int GetSlotIndexForUnit(StateObjectReference UnitRef)
+{
+	local int SlotIndex;	//Index into the list of places where a soldier can stand in the after action scene, from left to right
+	local int SquadIndex;	//Index into the HQ's squad array, containing references to unit state objects
+
+	for(SlotIndex = 0; SlotIndex < SoldierSlotCount; ++SlotIndex)
+	{
+		SquadIndex = SlotIndex;
+		if(SquadIndex < XComHQ.Squad.Length)
+		{
+			if(XComHQ.Squad[SquadIndex].ObjectID == UnitRef.ObjectID)
+				return SlotIndex;
+		}
+	}
+
+	return -1;
+}
+
 
 simulated function BuildWorldCoordinates()
 {

@@ -15,6 +15,9 @@ var robojumper_UISquadSelect_SoldierPanel TheSoldierPanel;
 var robojumper_UISquadSelect_SkillsPanel TheSkillsPanel;
 var robojumper_UISquadSelect_StatsPanel TheStatsPanel;
 
+var array<UIPanel> ExtraInfoBoxes;
+var int InfoBoxHeight;
+
 var bool bSkipRefocus;
 
 
@@ -85,6 +88,8 @@ simulated function UpdateData(optional int Index = -1, optional bool bDisableEdi
 	if (Unit == none)
 	{
 		SetEmpty();
+		SpawnExtraInfoBoxes();
+		RealizeHeight();
 		if (bIsFocused)
 		{
 			Navigator.SetSelected(DynamicPanel);
@@ -123,6 +128,7 @@ simulated function UpdateData(optional int Index = -1, optional bool bDisableEdi
 
 		TheSoldierPanel = robojumper_UISquadSelect_SoldierPanel(Spawn(class'robojumper_UISquadSelect_SoldierPanel', TheList.itemContainer).InitPanel());
 		TheSoldierPanel.UpdateData(bDisabledEdit, bDisabledDismiss);
+		SpawnExtraInfoBoxes();
 		RealizeHeight();
 
 		if (class'robojumper_SquadSelectConfig'.static.ShouldShowStats())
@@ -407,6 +413,7 @@ simulated function SetEmpty()
 			TheStatsPanel.Remove();
 		TheStatsPanel = none;
 	}
+	ClearExtraInfoBoxes();
 	if (DynamicPanel == none)
 	{
 		CreateDynamicPanel();
@@ -420,12 +427,66 @@ simulated function SetFilled()
 		DynamicPanel.Remove();
 		DynamicPanel = none;
 	}
+	ClearExtraInfoBoxes();
 	if (TheList == none)
 	{
 		CreateList();
 	}
 	// we're gonna shrink it again. shrunk lists can not grow by default
 	TheList.SetHeight(1000);
+}
+
+simulated function ClearExtraInfoBoxes()
+{
+	local UIPanel Panel;
+	foreach ExtraInfoBoxes(Panel)
+	{
+		Panel.Remove();
+	}
+	ExtraInfoBoxes.Length = 0;
+}
+
+simulated function SpawnExtraInfoBoxes()
+{
+	local LWTuple Tuple, InnerTuple;
+	local int i;
+	
+	Tuple = new class'LWTuple';
+	Tuple.Id = 'rjSquadSelect_ExtraInfo';
+
+	Tuple.Data.Length = 1;
+	Tuple.Data[0].kind = LWTVInt;
+	Tuple.Data[0].i = SlotIndex;
+
+	`XEVENTMGR.TriggerEvent('rjSquadSelect_ExtraInfo', Tuple, Tuple, none);
+
+	for (i = 1; i < Tuple.Data.Length; i++)
+	{
+		InnerTuple = LWTuple(Tuple.Data[i].o);
+		SpawnInfoBox(InnerTuple.Data[0].s, InnerTuple.Data[1].s, InnerTuple.Data[2].s);
+	}
+}
+
+simulated function SpawnInfoBox(string strText, string strTextColor, string strBGColor)
+{
+	local UIPanel Panel;
+	local UIPanel BGBox;
+	local UIScrollingText Text;
+
+	Panel = Spawn(class'UIPanel', self);
+	Panel.bIsNavigable = false;
+	Panel.InitPanel();
+	Panel.SetAlpha(0.7);
+
+	BGBox = Spawn(class'UIPanel', Panel);
+	BGBox.InitPanel('theBG', class'UIUtilities_Controls'.const.MC_X2BackgroundSimple);
+	BGBox.SetSize(Width, InfoBoxHeight);
+	BGBox.SetColor(strBGColor);
+
+	Text = Spawn(class'UIScrollingText', Panel).InitScrollingText('theText', "", width - 20, 10, 0);
+	Text.SetHTMLText("<p align='CENTER'><font size='26' color='#" $ strTextColor $ "'>" $ strText $ "</font></p>");
+
+	ExtraInfoBoxes.AddItem(Panel);
 }
 
 simulated function DisableSlot()
@@ -437,9 +498,32 @@ simulated function DisableSlot()
 simulated function RealizeHeight()
 {
 	local int iheight;
-	iheight = TheList.ShrinkToFit();
-	TheList.SetHeight(iheight);
-	TheList.SetY(/*240*/ - iheight);
+	if (TheList != none)
+	{
+		iheight = TheList.ShrinkToFit();
+		TheList.SetHeight(iheight);
+		TheList.SetY(/*240*/ - iheight);
+	}
+	StackInfoBoxes();
+}
+
+simulated function StackInfoBoxes()
+{
+	local int i, startY;
+
+	if (DynamicPanel != none)
+	{
+		startY = DynamicPanel.Y;
+	}
+	else if (TheList != none)
+	{
+		startY = TheList.Y;
+	}
+
+	for (i = 0; i < ExtraInfoBoxes.Length; i++)
+	{
+		ExtraInfoBoxes[i].SetY(startY - (i + 1) * InfoBoxHeight);
+	}
 }
 
 simulated function OnSelectSoldierMouseEvent(UIPanel control, int cmd)
@@ -633,5 +717,6 @@ defaultproperties
 {
 	LibID = "EmptyControl";
 	width = 282;
+	InfoBoxHeight = 32;
 }
  
