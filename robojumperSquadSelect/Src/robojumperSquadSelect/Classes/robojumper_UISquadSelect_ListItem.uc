@@ -53,7 +53,7 @@ function UIPanel CreateDynamicPanel()
 	SelectSoldierText.InitText();
 	SelectSoldierText.SetPosition(10, 100);
 	SelectSoldierText.SetWidth(Width - 20);
-	SelectSoldierText.SetHtmlText(class'UIUtilities_Text'.static.AddFontInfo(class'UIUtilities_Text'.static.GetColoredText(m_strSelectUnit, bIsFocused ? -1 : eUIState_Normal, 26, "CENTER"), false, true));
+	SelectSoldierText.SetHtmlText(class'UIUtilities_Text'.static.AddFontInfo(class'UIUtilities_Text'.static.GetColoredText(GetSelectUnitString(), bIsFocused ? -1 : eUIState_Normal, 26, "CENTER"), false, true));
 	
 	return DynamicPanel;
 }
@@ -489,6 +489,24 @@ simulated function SpawnInfoBox(string strText, string strTextColor, string strB
 	ExtraInfoBoxes.AddItem(Panel);
 }
 
+simulated function string GetSelectUnitString()
+{
+	local LWTuple Tuple;
+
+	Tuple = new class'LWTuple';
+	Tuple.Id = 'rjSquadSelect_SelectUnitString';
+
+	Tuple.Data.Length = 2;
+	Tuple.Data[0].kind = LWTVInt;
+	Tuple.Data[0].i = SlotIndex;
+	Tuple.Data[1].kind = LWTVString;
+	Tuple.Data[1].s = m_strSelectUnit;
+
+	`XEVENTMGR.TriggerEvent('rjSquadSelect_SelectUnitString', Tuple, Tuple, none);
+
+	return Tuple.Data[1].s;
+}
+
 simulated function DisableSlot()
 {
 	/*bDisabled = true;
@@ -582,7 +600,7 @@ simulated function OnReceiveFocus()
 	else if (DynamicPanel != none)
 	{
 		DynamicPanel.OnReceiveFocus();
-		SelectSoldierText.SetHtmlText(class'UIUtilities_Text'.static.AddFontInfo(class'UIUtilities_Text'.static.GetColoredText(m_strSelectUnit, , 26, "CENTER"), false, true));
+		SelectSoldierText.SetHtmlText(class'UIUtilities_Text'.static.AddFontInfo(class'UIUtilities_Text'.static.GetColoredText(GetSelectUnitString(), , 26, "CENTER"), false, true));
 	}
 }
 
@@ -612,7 +630,7 @@ simulated function OnLoseFocus()
 	else if (DynamicPanel != none)
 	{
 		DynamicPanel.OnLoseFocus();
-		SelectSoldierText.SetHtmlText(class'UIUtilities_Text'.static.AddFontInfo(class'UIUtilities_Text'.static.GetColoredText(m_strSelectUnit, eUIState_Normal, 26, "CENTER"), false, true));
+		SelectSoldierText.SetHtmlText(class'UIUtilities_Text'.static.AddFontInfo(class'UIUtilities_Text'.static.GetColoredText(GetSelectUnitString(), eUIState_Normal, 26, "CENTER"), false, true));
 	}
 }
 
