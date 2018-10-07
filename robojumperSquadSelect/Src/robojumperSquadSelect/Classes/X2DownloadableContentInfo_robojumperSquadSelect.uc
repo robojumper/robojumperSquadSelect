@@ -100,3 +100,15 @@ exec function FinalMissionSkipCutscenes()
 	if (SquadScreen != none)
 		SquadScreen.bSkipFinalMissionCutscenes = !SquadScreen.bSkipFinalMissionCutscenes;
 }
+
+exec function NukeSquad()
+{
+	local XComGameState NewGameState;
+	local XComGameState_HeadquartersXCom XComHQ;
+
+	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Clear Squad");
+	XComHQ = XComGameState_HeadquartersXCom(NewGameState.ModifyStateObject(class'XComGameState_HeadquartersXCom', `XCOMHQ.ObjectID));
+	XComHQ.Squad.Length = 0;
+	XComHQ.AllSquads.Length = 0;
+	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState);	
+}

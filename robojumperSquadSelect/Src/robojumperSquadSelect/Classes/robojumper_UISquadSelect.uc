@@ -451,6 +451,7 @@ simulated function UpdateData(optional bool bFillSquad)
 
 			if (UnitPawns[SquadIndex] != none)
 			{
+				// TODO: Can we reach this if XComHQ.Squad[SquadIndex].ObjectID == 0?
 				//m_kPawnMgr.ReleaseCinematicPawn(self, UnitPawns[SquadIndex].ObjectID);
 				m_kPawnMgr.ReleaseCinematicPawn(self, XComHQ.Squad[SquadIndex].ObjectID);
 			}
@@ -460,7 +461,11 @@ simulated function UpdateData(optional bool bFillSquad)
 
 		if(bDirty || ListItem.bDirty)
 		{
-			UnitState = XComGameState_Unit(History.GetGameStateForObjectID(XComHQ.Squad[SquadIndex].ObjectID));
+			if (SquadIndex < XComHQ.Squad.Length)
+				UnitState = XComGameState_Unit(History.GetGameStateForObjectID(XComHQ.Squad[SquadIndex].ObjectID));
+			else
+				UnitState = none;
+
 			if (RequiredSpecialSoldiers.Length > 0 && UnitState != none && RequiredSpecialSoldiers.Find(UnitState.GetMyTemplateName()) != INDEX_NONE)
 				ListItem.UpdateData(SquadIndex, true, true, false, UnitState.GetSoldierClassTemplate().CannotEditSlots); // Disable customization or removing any special soldier required for the mission
 			else
@@ -1204,6 +1209,7 @@ simulated function XComUnitPawn CreatePawn(StateObjectReference UnitRef, int ind
 	local XComUnitPawn UnitPawn, GremlinPawn;
 	local array<AnimSet> GremlinHQAnims;
 
+	if (UnitRef.ObjectID <= 0) return none;
 
 	Keyfr = GetPosRotForIndex(index);
 	

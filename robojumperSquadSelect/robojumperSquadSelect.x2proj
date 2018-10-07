@@ -7,6 +7,7 @@
     <SteamPublishID>0</SteamPublishID>
     <AssemblyName>robojumperSquadSelect</AssemblyName>
     <RootNamespace>robojumperSquadSelect</RootNamespace>
+    <ProjectGuid>{ddf1ecba-b5ce-4997-a308-8b23340bfc5f}</ProjectGuid>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <OutputPath>bin\Debug\</OutputPath>
