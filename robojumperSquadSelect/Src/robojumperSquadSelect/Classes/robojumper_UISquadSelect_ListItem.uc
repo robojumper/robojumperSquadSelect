@@ -418,6 +418,7 @@ simulated function SetEmpty()
 	{
 		CreateDynamicPanel();
 	}
+	SelectSoldierText.SetHtmlText(class'UIUtilities_Text'.static.AddFontInfo(class'UIUtilities_Text'.static.GetColoredText(GetSelectUnitString(), eUIState_Normal, 26, "CENTER"), false, true));
 }
 
 simulated function SetFilled()
