@@ -130,13 +130,16 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 		MissionState = XComGameState_MissionSite(NewGameState.ModifyStateObject(class'XComGameState_MissionSite', MissionState.ObjectID));
 		MissionState.bHasPlayedSITREPNarrative = true;
 	}
-	else if (SoldierSlotCount <= 3)
+	else if (AllowSquadSizeNarratives())
 	{
-		`XEVENTMGR.TriggerEvent('OnSizeLimitedSquadSelect', , , NewGameState);
-	}
-	else if (SoldierSlotCount > 5 && SquadCount > 1)
-	{
-		`XEVENTMGR.TriggerEvent('OnSuperSizeSquadSelect', , , NewGameState);
+		if (SoldierSlotCount <= 3)
+		{
+			`XEVENTMGR.TriggerEvent('OnSizeLimitedSquadSelect', , , NewGameState);
+		}
+		else if (SoldierSlotCount > 5 && SquadCount > 1)
+		{
+			`XEVENTMGR.TriggerEvent('OnSuperSizeSquadSelect', , , NewGameState);
+		}
 	}
 	`XCOMGAME.GameRuleset.SubmitGameState(NewGameState); 
 	
@@ -216,6 +219,21 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	SetTimer(0.1f, false, nameof(StartPreMissionCinematic));
 	XComHeadquartersController(`HQPRES.Owner).SetInputState('None');
 
+}
+
+simulated function bool AllowSquadSizeNarratives()
+{
+	local LWTuple Tuple;
+
+	Tuple = new class'LWTuple';
+	Tuple.Id = 'rjSquadSelect_AllowSquadSizeNarratives';
+	Tuple.Data.Add(1);
+	Tuple.Data[0].kind = LWTVBool;
+	Tuple.Data[0].b = true;
+
+	`XEVENTMGR.TriggerEvent('rjSquadSelect_AllowSquadSizeNarratives', Tuple, Tuple, none);
+
+	return Tuple.Data[0].b;
 }
 
 function CreateOrUpdateLaunchButton()
@@ -607,7 +625,93 @@ simulated function CloseScreen()
 	{
 		bDirty = true;
 	}
-	super.CloseScreen();
+//	super.CloseScreen();
+	CloseScreenInternal();
+}
+
+// Copied from UISquadSelect:CloseScreen
+simulated function CloseScreenInternal()
+{
+	local XComGameState_MissionSite MissionState;
+	local LWTuple Tuple;
+
+	MissionState = GetMissionState();
+	
+	if (bLaunched)
+	{
+		Tuple = new class'LWTuple';
+		Tuple.Id = 'rjSquadSelect_UseCinematic';
+		Tuple.Data.Add(1);
+		Tuple.Data[0].kind = LWTVInt;
+		Tuple.Data[0].i = MissionState.GetMissionSource().bRequiresSkyrangerTravel ? 0 : 1;
+
+		`XEVENTMGR.TriggerEvent('rjSquadSelect_UseCinematic', Tuple, Tuple, none);
+
+		switch (Tuple.Data[0].i)
+		{
+			case 0:
+				// Standard departure, take-off
+				`XCOMGRI.DoRemoteEvent('PreM_GoToDeparture');
+				break;
+			case 1:
+				// Fade-out
+				`XCOMGRI.DoRemoteEvent('PreM_GoToAvengerDefense');
+				break;
+			case 2:
+				// Just cut away
+				`XCOMGRI.DoRemoteEvent('PreM_Cancel');
+				break;
+			default:
+				`REDSCREEN("EVERYTHING'S GONE BAD! ONLY PASS 0, 1, 2 TO rjSquadSelect_UseCinematic!");
+				// Fallback to standard
+				`XCOMGRI.DoRemoteEvent('PreM_GoToDeparture');
+				break;
+		}
+
+		// We've been working on XComHQ.Squad directly, now move it to the XComHQ.AllSquads list.
+		FinalizeReserveSquads();
+
+		// Re-equip any gear which was stripped from soldiers not in the squad
+		EquipStrippedSoldierGear();
+
+		// Strategy map has its own button help
+		`HQPRES.m_kAvengerHUD.NavHelp.ClearButtonHelp();
+		Hide();
+
+		if( `CHEATMGR.bShouldAutosaveBeforeEveryAction )
+		{
+			`AUTOSAVEMGR.DoAutosave(, true, true);
+		}
+	}
+	else if (XComHQ.AllSquads.Length > 0)
+	{
+		// don't close the screen, just back out the most recent reserve squad
+		if(UpdateState == none)
+		{
+			CreatePendingStates();
+		}
+
+		XComHQ.Squad = XComHQ.AllSquads[XComHQ.AllSquads.Length - 1].SquadMembers;
+		XComHQ.AllSquads.Length = XComHQ.AllSquads.Length - 1;
+
+		StoreGameStateChanges();
+
+		UpdateData(true);
+		CreateOrUpdateLaunchButton();
+	}
+	else
+	{
+		`XCOMGRI.DoRemoteEvent('PreM_Cancel');
+
+		MissionState.ClearSpecialSoldiers();
+		
+		// Re-equip any gear which was stripped from soldiers not in the squad
+		EquipStrippedSoldierGear();
+
+		// Strategy map has its own button help
+		`HQPRES.m_kAvengerHUD.NavHelp.ClearButtonHelp();
+		Hide();
+	}
 }
 
 simulated function bool OnUnrealCommand(int cmd, int arg)
