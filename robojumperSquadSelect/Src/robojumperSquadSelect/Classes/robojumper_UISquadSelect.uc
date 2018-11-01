@@ -205,7 +205,8 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 
 	CreateOrUpdateLaunchButton();
 
-	UpdateData(class'robojumper_SquadSelectConfig'.static.ShouldAutoFillSquad());
+	InitialSquadSetup();
+	UpdateData();
 	UpdateNavHelp();
 	UpdateMissionInfo();
 	UpdateSitRep();
@@ -232,6 +233,21 @@ simulated function bool AllowSquadSizeNarratives()
 	Tuple.Data[0].b = true;
 
 	`XEVENTMGR.TriggerEvent('rjSquadSelect_AllowSquadSizeNarratives', Tuple, Tuple, none);
+
+	return Tuple.Data[0].b;
+}
+
+simulated function bool AllowAutoFilling()
+{
+	local LWTuple Tuple;
+
+	Tuple = new class'LWTuple';
+	Tuple.Id = 'rjSquadSelect_AllowAutoFilling';
+	Tuple.Data.Add(1);
+	Tuple.Data[0].kind = LWTVBool;
+	Tuple.Data[0].b = true;
+
+	`XEVENTMGR.TriggerEvent('rjSquadSelect_AllowAutoFilling', Tuple, Tuple, none);
 
 	return Tuple.Data[0].b;
 }
@@ -303,6 +319,72 @@ simulated function AddHiddenSoldiersToSquad(int NumSoldiersToAdd)
 	// commented out -- we don't have any hidden soldiers. We always show all the slots
 }
 
+simulated function InitialSquadSetup()
+{
+	local XComGameStateHistory History;
+	local int i;
+	local XComGameState_Unit UnitState;
+	local XComGameState_MissionSite MissionState;
+	local GeneratedMissionData MissionData;
+	local bool bAllowWoundedSoldiers;
+
+	History = `XCOMHISTORY;
+
+	// get existing states
+	XComHQ = class'UIUtilities_Strategy'.static.GetXComHQ();
+
+	MissionData = XComHQ.GetGeneratedMissionData(XComHQ.MissionRef.ObjectID);
+	bAllowWoundedSoldiers = MissionData.Mission.AllowDeployWoundedUnits;
+
+	MissionState = XComGameState_MissionSite(History.GetGameStateForObjectID(XComHQ.MissionRef.ObjectID));
+	bHasRankLimits = MissionState.HasRankLimits(MinRank, MaxRank);
+
+	// create change states
+	UpdateState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Fill Squad");
+	XComHQ = XComGameState_HeadquartersXCom(UpdateState.CreateStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));
+	UpdateState.AddStateObject(XComHQ);
+	// Remove tired soldiers from the squad, and remove soldiers that don't fit the rank limits (if they exist)
+	for(i = 0; i < XComHQ.Squad.Length; i++)
+	{
+		UnitState = XComGameState_Unit(History.GetGameStateForObjectID(XComHQ.Squad[i].ObjectID));
+
+		if(UnitState != none && (UnitState.GetMentalState() != eMentalState_Ready || 
+			(bHasRankLimits && (UnitState.GetRank() < MinRank || UnitState.GetRank() > MaxRank))))
+		{
+			XComHQ.Squad[i].ObjectID = 0;
+		}
+	}
+
+	if (class'robojumper_SquadSelectConfig'.static.ShouldAutoFillSquad() && AllowAutoFilling())
+	{
+		for(i = 0; i < SoldierSlotCount; i++)
+		{
+			if(XComHQ.Squad.Length == i || XComHQ.Squad[i].ObjectID == 0)
+			{
+				if(bHasRankLimits)
+				{
+					UnitState = XComHQ.GetBestDeployableSoldier(true, bAllowWoundedSoldiers, MinRank, MaxRank);
+				}
+				else
+				{
+					UnitState = XComHQ.GetBestDeployableSoldier(true, bAllowWoundedSoldiers);
+				}
+
+				if(UnitState != none)
+					XComHQ.Squad[i] = UnitState.GetReference();
+			}
+		}
+	}
+	StoreGameStateChanges();
+
+	TriggerEventsForWillStates();
+
+	if (!bBlockSkulljackEvent)
+	{
+		SkulljackEvent();
+	}
+}
+
 simulated function UpdateData(optional bool bFillSquad)
 {
 	local XComGameStateHistory History;
@@ -311,18 +393,22 @@ simulated function UpdateData(optional bool bFillSquad)
 	local int SquadIndex;	//Index into the HQ's squad array, containing references to unit state objects
 	local int ListItemIndex;//Index into the array of list items the player can interact with to view soldier status and promote
 
-	
 
 	local robojumper_UISquadSelect_ListItem ListItem;
 	local XComGameState_Unit UnitState;
 	local XComGameState_MissionSite MissionState;
 	local GeneratedMissionData MissionData;
-	local bool bAllowWoundedSoldiers, bSpecialSoldierFound;
+	local bool bSpecialSoldierFound, bAllowWoundedSoldiers;
 	local array<name> RequiredSpecialSoldiers;
 	local int iMaxExtraHeight;
 
 	History = `XCOMHISTORY;
-	// test: don't clear pawns
+
+	if (bFillSquad == true)
+	{
+		`REDSCREEN(default.Class $ ":" $ GetFuncName() $ " -- bFillSquad is deprecated, call SetupInitialSquad instead");
+	}
+
 	ClearPawns();
 
 	// get existing states
@@ -394,52 +480,6 @@ simulated function UpdateData(optional bool bFillSquad)
 		}
 	}
 
-	// fill out the squad as much as possible
-	if(bFillSquad)
-	{
-		// create change states
-		UpdateState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Fill Squad");
-		XComHQ = XComGameState_HeadquartersXCom(UpdateState.CreateStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));
-		UpdateState.AddStateObject(XComHQ);
-		// Remove tired soldiers from the squad, and remove soldiers that don't fit the rank limits (if they exist)
-		for(i = 0; i < XComHQ.Squad.Length; i++)
-		{
-			UnitState = XComGameState_Unit(History.GetGameStateForObjectID(XComHQ.Squad[i].ObjectID));
-
-			if(UnitState != none && (UnitState.GetMentalState() != eMentalState_Ready || 
-				(bHasRankLimits && (UnitState.GetRank() < MinRank || UnitState.GetRank() > MaxRank))))
-			{
-				XComHQ.Squad[i].ObjectID = 0;
-			}
-		}
-
-		for(i = 0; i < SoldierSlotCount; i++)
-		{
-			if(XComHQ.Squad.Length == i || XComHQ.Squad[i].ObjectID == 0)
-			{
-				if(bHasRankLimits)
-				{
-					UnitState = XComHQ.GetBestDeployableSoldier(true, bAllowWoundedSoldiers, MinRank, MaxRank);
-				}
-				else
-				{
-					UnitState = XComHQ.GetBestDeployableSoldier(true, bAllowWoundedSoldiers);
-				}
-
-				if(UnitState != none)
-					XComHQ.Squad[i] = UnitState.GetReference();
-			}
-		}
-		StoreGameStateChanges();
-
-		TriggerEventsForWillStates();
-
-		if (!bBlockSkulljackEvent)
-		{
-			SkulljackEvent();
-		}
-	}
-
 	// This method iterates all soldier templates and empties their backpacks if they are not already empty
 	BlastBackpacks();
 
@@ -452,6 +492,8 @@ simulated function UpdateData(optional bool bFillSquad)
 		MakeWoundedSoldierItemsAvailable();
 	}
 
+	`XEVENTMGR.TriggerEvent('rjSquadSelect_UpdateData', none, none, none);
+
 	// create change states
 	CreatePendingStates();
 
@@ -463,7 +505,6 @@ simulated function UpdateData(optional bool bFillSquad)
 		SquadIndex = SlotIndex;
 		// We want the slots to match the visual order of the pawns in the slot list.
 		ListItem = robojumper_UISquadSelect_ListItem(SquadList.GetItem(ListItemIndex));
-		// test: avoid unneccessarily refreshing all the stuff, which causes units to flicker
 		if (bDirty || (SquadIndex < XComHQ.Squad.length && XComHQ.Squad[SquadIndex].ObjectID > 0 && ListItem.bDirty))
 		{
 
