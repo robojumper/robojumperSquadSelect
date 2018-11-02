@@ -9,7 +9,7 @@ var localized string strModTitle;
 var localized string strLabel;
 var localized string strGroupTitle;
 
-var localized string strShowWeaponUpgradeIcons, strSkipSecondaryUpgradeIconsAvailable, strShowBGImages, strShowMeTheSkills, strSkipInitialAbilities, strAutofillSquad, strShowStats, strDisallowInfiniteScrolling;
+var localized string strShowWeaponUpgradeIcons, strSkipSecondaryUpgradeIconsAvailable, strShowBGImages, strShowMeTheSkills, strSkipInitialAbilities, strAutofillSquad, strShowStats, strDisallowInfiniteScrolling, strSkipIntro;
 var localized string strHideTrainingCenterButton;
 
 var localized string strSquadSize;
@@ -18,7 +18,7 @@ var config int iSquadSizeMin, iSquadSizeMax;
 var localized string strSquadSizeSpawnWarning;
 var config array<name> SpawnPointFixingMods;
 
-var bool bShowWeaponUpgradeIcons, bSkipSecondaryUpgradeIconsAvailable, bShowBGImages, bShowMeTheSkills, bSkipInitialAbilities, bAutofillSquad, bShowMeTheStats, bDisallowInfiniteScrolling;
+var bool bShowWeaponUpgradeIcons, bSkipSecondaryUpgradeIconsAvailable, bShowBGImages, bShowMeTheSkills, bSkipInitialAbilities, bAutofillSquad, bShowMeTheStats, bDisallowInfiniteScrolling, bSkipIntro;
 var bool bHideTrainingCenterButton;
 
 
@@ -32,6 +32,7 @@ const SKIP_SQUADDIE_ABILITIES = 'skipSquaddieAbilities';
 const SHOW_STATS = 'showMeTheStats';
 const AUTO_FILL_SQUAD = 'autofillSquad';
 const DISALLOW_INFINITE_SCROLL = 'disallowScrolling';
+const SKIP_INTRO = 'skipIntro';
 const HIDE_TRAINING_CENTER = 'hideTrainingCenter';
 
 event OnInit(UIScreen Screen)
@@ -78,6 +79,7 @@ simulated function ClientModCallback(MCM_API_Instance ConfigAPI, int GameMode)
 	Group.AddCheckbox(HIDE_TRAINING_CENTER, strHideTrainingCenterButton, "", bHideTrainingCenterButton, , CheckboxSaveHandler).SetEditable(bShowMeTheStats);
 
 	Group.AddCheckbox(AUTO_FILL_SQUAD, strAutofillSquad, "", bAutofillSquad, , CheckboxSaveHandler);
+	Group.AddCheckbox(SKIP_INTRO, strSkipIntro, "", bSkipIntro, , CheckboxSaveHandler);
 	
 	Group.AddCheckbox(DISALLOW_INFINITE_SCROLL, strDisallowInfiniteScrolling, "", bDisallowInfiniteScrolling, , CheckboxSaveHandler);
 
@@ -128,6 +130,9 @@ simulated function CheckboxSaveHandler(MCM_API_Setting _Setting, bool _SettingVa
 		case DISALLOW_INFINITE_SCROLL:
 			bDisallowInfiniteScrolling = _SettingValue;
 			break;
+		case SKIP_INTRO:
+			bSkipIntro = _SettingValue;
+			break;
 		default:
 			assert(false);
 	}
@@ -152,6 +157,7 @@ simulated function SaveButtonClicked(MCM_API_SettingsPage Page)
 	DefObj.bShowStats = bShowMeTheStats;
 	DefObj.bHideTrainingCenterButton = bHideTrainingCenterButton;
 	DefObj.bDisallowInfiniteScrolling = bDisallowInfiniteScrolling;
+	DefObj.bSkipIntro = bSkipIntro;
 	DefObj.iSquadSize = ch_iMaxSoldiers;
 	class'robojumper_SquadSelectConfig'.static.StaticSaveConfig();
 	// internally guarded

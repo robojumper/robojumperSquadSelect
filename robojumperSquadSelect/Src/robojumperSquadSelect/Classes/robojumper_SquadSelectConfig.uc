@@ -2,13 +2,13 @@ class robojumper_SquadSelectConfig extends Object config(robojumperSquadSelect_N
 
 `define DEFOBJ robojumper_SquadSelectConfig(class'Engine'.static.FindClassDefaultObject("robojumperSquadSelect.robojumper_SquadSelectConfig"))
 
-var config bool bShowWeaponUpgradeIcons, bSkipSecondaryUpgradeIconsAvailable, bShowBGImages, bShowMeTheSkills, bSkipInitialAbilities, bAutofillSquad, bShowStats, bDisallowInfiniteScrolling;
+var config bool bShowWeaponUpgradeIcons, bSkipSecondaryUpgradeIconsAvailable, bShowBGImages, bShowMeTheSkills, bSkipInitialAbilities, bAutofillSquad, bShowStats, bDisallowInfiniteScrolling, bSkipIntro;
 var config bool bHideTrainingCenterButton;
 
 var config int iSquadSize;
 var config int iVersion;
 
-var bool bShowWeaponUpgradeIcons_def, bSkipSecondaryUpgradeIconsAvailable_def, bShowBGImages_def, bShowMeTheSkills_def, bSkipInitialAbilities_def, bAutofillSquad_def, bShowStats_def, bDisallowInfiniteScrolling_def;
+var bool bShowWeaponUpgradeIcons_def, bSkipSecondaryUpgradeIconsAvailable_def, bShowBGImages_def, bShowMeTheSkills_def, bSkipInitialAbilities_def, bAutofillSquad_def, bShowStats_def, bDisallowInfiniteScrolling_def, bSkipIntro_def;
 var bool bHideTrainingCenterButton_def;
 
 var int iVersion_def;
@@ -29,6 +29,7 @@ static function Initialize()
 		DefaultObj.bAutofillSquad = default.bAutofillSquad_def;
 		DefaultObj.bShowStats = default.bShowStats_def;
 		DefaultObj.bDisallowInfiniteScrolling = default.bDisallowInfiniteScrolling_def;
+		DefaultObj.bSkipIntro = default.bSkipIntro_def;
 		DefaultObj.bHideTrainingCenterButton = default.bHideTrainingCenterButton_def;
 		// messes with LW2
 		if (!class'X2DownloadableContentInfo_robojumperSquadSelect'.default.bDontTouchSquadSize)
@@ -96,6 +97,11 @@ static function bool DisAllowInfiniteScrolling()
 	return default.bDisallowInfiniteScrolling;
 }
 
+static function bool SkipIntro()
+{
+	return default.bSkipIntro;
+}
+
 static function bool HideTrainingCenterButton()
 {
 	return default.bHideTrainingCenterButton;	
@@ -128,6 +134,7 @@ defaultproperties
 	bAutofillSquad_def=true
 	bShowStats_def=false
 	bDisallowInfiniteScrolling_def=false
+	bSkipIntro_def=false
 	bHideTrainingCenterButton_def=false
 
 	iVersion_def=1

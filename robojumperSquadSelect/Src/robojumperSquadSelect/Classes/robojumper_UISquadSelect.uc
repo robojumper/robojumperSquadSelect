@@ -50,7 +50,7 @@ var localized string strUnequipSquadWarning, strUnequipBarracksWarning; // dialo
 var bool bSkipFinalMissionCutscenes;
 ///////////////////////////////////////////
 var bool bSkipDirty;
-
+var bool bInstantLineupUI;
 
 
 // Constructor
@@ -211,6 +211,8 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	UpdateMissionInfo();
 	UpdateSitRep();
 
+	GetIntroAllowed();
+
 	if (MissionData.Mission.AllowDeployWoundedUnits)
 	{
 		`HQPRES.UIWoundedSoldiersAllowed();
@@ -219,7 +221,90 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	`HQPRES.CAMLookAtNamedLocation(UIDisplayCam_Overview, 0);
 	SetTimer(0.1f, false, nameof(StartPreMissionCinematic));
 	XComHeadquartersController(`HQPRES.Owner).SetInputState('None');
+}
 
+simulated function GetIntroAllowed()
+{
+	local LWTuple Tuple;
+
+	Tuple = new class'LWTuple';
+	Tuple.Id = 'rjSquadSelect_UseIntro';
+	Tuple.Data.Add(1);
+	Tuple.Data[0].kind = LWTVInt;
+	Tuple.Data[0].i = class'robojumper_SquadSelectConfig'.static.SkipIntro() ? 1 : 0;
+
+	`XEVENTMGR.TriggerEvent('rjSquadSelect_UseIntro', Tuple, Tuple, none);
+
+	switch (Tuple.Data[0].i)
+	{
+		case 0:
+			// Standard intro, do nothing
+			break;
+		case 1:
+			bInstantLineupUI = true;
+			break;
+		default:
+			`REDSCREEN("EVERYTHING'S GONE BAD! ONLY PASS 0, 1 TO rjSquadSelect_UseIntro!");
+			// Fallback to standard
+			break;
+	}
+
+}
+
+simulated function StartPreMissionCinematic()
+{
+	super.StartPreMissionCinematic();
+	// super didn't start a timer (or the timer expired) -- skip the intro when desired
+	`log("StartPreMissionCinematic");
+	if (bIsFocused /* <==> !IsTimerActive(nameof(StartPreMissionCinematic))*/)
+	{
+		if (bInstantLineupUI)
+		{
+			// Set a very short timer to skip the intro camera matinee
+			SetTimer(0.001f, false, nameof(FinishIntroCinematic));
+		}
+	}
+}
+
+simulated function FinishIntroCinematic()
+{
+	local array<SequenceObject> FoundMatinees;
+	local SequenceObject MatineeObject;
+	local SeqAct_Interp Matinee;
+	local Sequence GameSeq;
+
+	GameSeq = class'WorldInfo'.static.GetWorldInfo().GetGameSequence();
+	GameSeq.FindSeqObjectsByClass(class'SeqAct_Interp', true, FoundMatinees);
+
+	foreach FoundMatinees(MatineeObject)
+	{	
+		if(MatineeObject.ObjComment ~= "Soldier lineup camera")
+		{
+			Matinee = SeqAct_Interp(MatineeObject);
+			`log(`showvar(Matinee.bIsPlaying));
+			SetFireEventsWhenJumpingForwards(Matinee.InterpData);
+			if (Matinee.bIsPlaying)
+			{
+				// False -- do trigger the events!
+				Matinee.SetPosition(Matinee.InterpData.InterpLength - 0.01f, false);
+			}
+		}
+	}
+}
+
+simulated function SetFireEventsWhenJumpingForwards(InterpData Matinee)
+{
+	local int i, j;
+	for (i = 0; i < Matinee.InterpGroups.Length; i++)
+	{
+		for (j = 0; j < Matinee.InterpGroups[i].InterpTracks.Length; j++)
+		{
+			if (InterpTrackEvent(Matinee.InterpGroups[i].InterpTracks[j]) != none)
+			{
+				InterpTrackEvent(Matinee.InterpGroups[i].InterpTracks[j]).bFireEventsWhenJumpingForwards = true;
+			}
+		}
+	}
 }
 
 simulated function bool AllowSquadSizeNarratives()
@@ -1066,7 +1151,7 @@ function ShowLineupUI()
 	{
 		l = visSlots / 2;
 		r = l;
-		UISquadSelect_ListItem(SquadList.GetItem(l)).AnimateIn(AnimateValue);
+		UISquadSelect_ListItem(SquadList.GetItem(l)).AnimateIn(bInstantLineupUI ? 0.0 : AnimateValue);
 		AnimateValue += AnimateRate;
 		l--;
 		r++;
@@ -1084,13 +1169,13 @@ function ShowLineupUI()
 		{
 			r = 0;
 		}
-		UISquadSelect_ListItem(SquadList.GetItem(r)).AnimateIn(AnimateValue);
+		UISquadSelect_ListItem(SquadList.GetItem(r)).AnimateIn(bInstantLineupUI ? 0.0 : AnimateValue);
 		r++;
 		if (l < 0)
 		{
 			l = SoldierSlotCount - 1;
 		}
-		UISquadSelect_ListItem(SquadList.GetItem(l)).AnimateIn(AnimateValue);
+		UISquadSelect_ListItem(SquadList.GetItem(l)).AnimateIn(bInstantLineupUI ? 0.0 : AnimateValue);
 		l--;
 		AnimateValue += AnimateRate;
 		shownSlots += 2;
@@ -1116,6 +1201,14 @@ simulated function SwitchPerspective()
 	MoveCamera(`HQINTERPTIME / 2);
 }
 
+//During the after action report, the characters walk up to the camera - this state represents that time
+state Cinematic_PawnsWalkingUp
+{
+	simulated event BeginState(name PreviousStateName)
+	{
+		StartPawnAnimation(bInstantLineupUI ? 'CharacterCustomization' : 'SquadLineup_Walkup', bInstantLineupUI ? 'Gremlin_Idle' : 'Gremlin_WalkUp');
+	}
+}
 
 // our squad may have more soldiers than we can normally display but it may have empty entries
 // collapse first
