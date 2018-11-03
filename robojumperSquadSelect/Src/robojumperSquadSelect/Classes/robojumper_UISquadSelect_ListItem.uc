@@ -53,7 +53,6 @@ function UIPanel CreateDynamicPanel()
 	SelectSoldierText.InitText();
 	SelectSoldierText.SetPosition(10, 100);
 	SelectSoldierText.SetWidth(Width - 20);
-	SelectSoldierText.SetHtmlText(class'UIUtilities_Text'.static.AddFontInfo(class'UIUtilities_Text'.static.GetColoredText(GetSelectUnitString(), bIsFocused ? -1 : eUIState_Normal, 26, "CENTER"), false, true));
 	
 	return DynamicPanel;
 }
@@ -418,7 +417,7 @@ simulated function SetEmpty()
 	{
 		CreateDynamicPanel();
 	}
-	SelectSoldierText.SetHtmlText(class'UIUtilities_Text'.static.AddFontInfo(class'UIUtilities_Text'.static.GetColoredText(GetSelectUnitString(), eUIState_Normal, 26, "CENTER"), false, true));
+	SelectSoldierText.SetHtmlText(class'UIUtilities_Text'.static.AddFontInfo(class'UIUtilities_Text'.static.GetColoredText(GetSelectUnitString(), bIsFocused ? -1 : eUIState_Normal, 26, "CENTER"), false, true));
 }
 
 simulated function SetFilled()
