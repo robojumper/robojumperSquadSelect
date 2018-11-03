@@ -607,6 +607,12 @@ simulated function OnReceiveFocus()
 
 simulated function SetSelectedNavigation()
 {
+	local UIPanel SelectedControl;
+
+	SelectedControl = ParentPanel.Navigator.GetSelected();
+	if (SelectedControl != none) 
+		SelectedControl.OnLoseFocus();
+
 	super.SetSelectedNavigation();
 	robojumper_UIList_SquadEditor(GetParent(class'robojumper_UIList_SquadEditor', true)).NavigatorSelectionChangedPanel(self);
 }

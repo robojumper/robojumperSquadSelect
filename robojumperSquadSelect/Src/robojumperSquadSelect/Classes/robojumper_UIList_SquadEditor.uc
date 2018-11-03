@@ -75,11 +75,10 @@ simulated function robojumper_UIList_SquadEditor InitSquadList(name InitName, in
 	TheMask.SetMask(ItemContainer);
 	TheMask.SetSize(Width, Height);
 	TheMask.SetY(-1000);
-	if (`ISCONTROLLERACTIVE)
-	{
-		// without this, we somehow enter the navigation cycle without using our navigator at all
-		Navigator.SelectFirstAvailable();
-	}
+
+	// without this, we somehow enter the navigation cycle without using our navigator at all
+	Navigator.SelectFirstAvailable();
+
 	return self;
 }
 
