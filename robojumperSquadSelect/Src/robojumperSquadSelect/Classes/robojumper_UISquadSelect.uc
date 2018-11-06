@@ -961,13 +961,7 @@ simulated function OnUnequipSquadDialogueCallback(name eAction)
 		UpdateState.AddStateObject(XComHQ);
 		Soldiers = XComHQ.GetSoldiers(false	, true);
 
-		RelevantSlots.AddItem(eInvSlot_Armor);
-		RelevantSlots.AddItem(eInvSlot_PrimaryWeapon);
-		RelevantSlots.AddItem(eInvSlot_SecondaryWeapon);
-		RelevantSlots.AddItem(eInvSlot_HeavyWeapon);
-		RelevantSlots.AddItem(eInvSlot_Utility);
-		RelevantSlots.AddItem(eInvSlot_GrenadePocket);
-		RelevantSlots.AddItem(eInvSlot_AmmoPocket);
+		RelevantSlots = GetRelevantSlots();
 
 		for(idx = 0; idx < Soldiers.Length; idx++)
 		{
@@ -1030,13 +1024,7 @@ simulated function OnUnequipBarracksDialogueCallback(name eAction)
 		UpdateState.AddStateObject(XComHQ);
 		Soldiers = XComHQ.GetSoldiers(true, true);
 
-		RelevantSlots.AddItem(eInvSlot_Armor);
-		RelevantSlots.AddItem(eInvSlot_PrimaryWeapon);
-		RelevantSlots.AddItem(eInvSlot_SecondaryWeapon);
-		RelevantSlots.AddItem(eInvSlot_HeavyWeapon);
-		RelevantSlots.AddItem(eInvSlot_Utility);
-		RelevantSlots.AddItem(eInvSlot_GrenadePocket);
-		RelevantSlots.AddItem(eInvSlot_AmmoPocket);
+		RelevantSlots = GetRelevantSlots();
 
 		for(idx = 0; idx < Soldiers.Length; idx++)
 		{
@@ -1059,6 +1047,26 @@ simulated function OnUnequipBarracksDialogueCallback(name eAction)
 		`GAMERULES.SubmitGameState(UpdateState);
 	}
 	UpdateNavHelp();
+}
+
+static function array<EInventorySlot> GetRelevantSlots()
+{
+	local array<EInventorySlot> RelevantSlots;
+
+	if (class'robojumper_SquadSelectConfig'.static.IsCHHLMinVersionInstalled(1, 6))
+	{
+		class'CHItemSlot'.static.CollectSlots(class'CHItemSlot'.const.SLOT_ALL, RelevantSlots);
+	}
+	else
+	{	
+		RelevantSlots.AddItem(eInvSlot_Armor);
+		RelevantSlots.AddItem(eInvSlot_PrimaryWeapon);
+		RelevantSlots.AddItem(eInvSlot_SecondaryWeapon);
+		RelevantSlots.AddItem(eInvSlot_HeavyWeapon);
+		RelevantSlots.AddItem(eInvSlot_Utility);
+		RelevantSlots.AddItem(eInvSlot_GrenadePocket);
+		RelevantSlots.AddItem(eInvSlot_AmmoPocket);
+	}
 }
 
 
