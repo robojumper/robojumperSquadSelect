@@ -210,6 +210,36 @@ simulated function int GetItemCount()
 	return GetNumItems();
 }
 
+// This is overwritten by the List because we only focus the *selected* child, and not *all* children like the Panel does.  
+simulated function OnReceiveFocus()
+{
+	local UIPanel SelectedChild;
+
+	super(UIPanel).OnReceiveFocus();
+
+	bIsFocused = true;
+
+	SelectedChild = Navigator.GetSelected();
+
+	if( SelectedChild != none )
+		SelectedChild.OnReceiveFocus();
+}
+
+simulated function OnLoseFocus()
+{
+	local UIPanel Child;
+
+	super(UIPanel).OnReceiveFocus();
+
+	bIsFocused = false;
+
+	foreach ItemContainer.ChildPanels(Child)
+	{
+		if( Child != self )
+			Child.OnLoseFocus();
+	}
+}
+
 
 simulated function bool OnUnrealCommand(int cmd, int arg)
 {
@@ -227,4 +257,9 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 			break;
 	}
 	return bHandled || Navigator.OnUnrealCommand(cmd, arg);
+}
+
+defaultproperties
+{
+	bCascadeFocus=false
 }

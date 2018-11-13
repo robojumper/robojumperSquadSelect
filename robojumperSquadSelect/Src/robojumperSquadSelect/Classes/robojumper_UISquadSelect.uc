@@ -32,7 +32,8 @@ var bool bUpperView;
 var string UIDisplayCam_Overview;
 ///////////////////////////////////////////
 var SimpleShapeManager m_ShapeMgr;
-///////////////////////////////////////////                                   
+///////////////////////////////////////////    
+var UIPanel CurrentlyNavigatingPanel;                               
 var robojumper_UIList_SquadEditor SquadList;
 var robojumper_UIMouseGuard_SquadSelect MouseGuard;
 var int iDefSlotY;
@@ -52,6 +53,12 @@ var bool bSkipFinalMissionCutscenes;
 var bool bSkipDirty;
 var bool bInstantLineupUI;
 
+/*
+// Example code, will take out later
+var UIList TestList1;
+var UIList TestList2;
+var UIButton TestButton3;
+*/
 
 // Constructor
 simulated function InitScreen(XComPlayerController InitController, UIMovie InitMovie, optional name InitName)
@@ -65,7 +72,6 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 
 	super(UIScreen).InitScreen(InitController, InitMovie, InitName);
 
-//	Navigator.HorizontalNavigation = true;
 	bInfiniteScrollingDisallowed = class'robojumper_SquadSelectConfig'.static.DisAllowInfiniteScrolling();
 
 	m_kMissionInfo = Spawn(class'UISquadSelectMissionInfo', self).InitMissionInfo();
@@ -172,6 +178,7 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	// HAX: always spawn it on the left, move it afterwards
 	listX = (Movie.UI_RES_X / 2) - (maxListWidth / 2);
 	SquadList = Spawn(class'robojumper_UIList_SquadEditor', self).InitSquadList('', listX, iDefSlotY, SoldierSlotCount, 6, class'robojumper_UISquadSelect_ListItem', LIST_ITEM_PADDING);
+	SquadList.Tag = 'rjSquadSelect_Navigable';
 	SquadList.GetScrollDelegate = GetScroll;
 	SquadList.ScrollCallback = OnStickMouseScrollCB;
 	SquadList.GetScrollGoalDelegate = GetScrollGoal;
@@ -182,6 +189,7 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 		fInterpGoal = fScroll;
 	}
 
+	CurrentlyNavigatingPanel = SquadList;
 	Navigator.SetSelected(SquadList);
 	
 	MouseGuard = robojumper_UIMouseGuard_SquadSelect(`SCREENSTACK.GetFirstInstanceOf(class'robojumper_UIMouseGuard_SquadSelect'));
@@ -212,6 +220,45 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	UpdateSitRep();
 
 	GetIntroAllowed();
+
+
+/*
+	// Example code, will take out later:
+	// First things first, you need to mark it with a Tag of
+	// 'rjSquadSelect_Navigable' but don't make it actually navigable
+	// Second, you need to prepare it so that it's ready to navigate as
+	// soon as it gets focus, but doesn't focus anything before that.
+	// This is here achieved by manually setting the SelectedIndex
+	// and making it not select any item automatically (bSelectFirstAvailable)
+	TestList1 = Spawn(class'UIList', self);
+	TestList1.Tag = 'rjSquadSelect_Navigable';
+	TestList1.bIsNavigable = false;
+	TestList1.bSelectFirstAvailable = false;
+	TestList1.InitList('', 20, 10, 200, 400);
+	TestList1.SelectedIndex = 0;
+	TestList1.Navigator.SelectedIndex = 0;
+	UIListItemString(TestList1.CreateItem()).InitListItem("1-1");
+	UIListItemString(TestList1.CreateItem()).InitListItem("1-2");
+	UIListItemString(TestList1.CreateItem()).InitListItem("1-3");
+	UIListItemString(TestList1.CreateItem()).InitListItem("1-4");
+
+	TestList2 = Spawn(class'UIList', self);
+	TestList2.Tag = 'rjSquadSelect_Navigable';
+	TestList2.bIsNavigable = false;
+	TestList2.bSelectFirstAvailable = false;
+	TestList2.InitList('', 240, 10, 200, 400);
+	TestList2.SelectedIndex = 0;
+	TestList2.Navigator.SelectedIndex = 0;
+	UIListItemString(TestList2.CreateItem()).InitListItem("2-1");
+	UIListItemString(TestList2.CreateItem()).InitListItem("2-2");
+	UIListItemString(TestList2.CreateItem()).InitListItem("2-3");
+
+	TestButton3 = Spawn(class'UIButton', self);
+	TestButton3.Tag = 'rjSquadSelect_Navigable';
+	TestButton3.bIsNavigable = false;
+	TestButton3.InitButton('', "Test Button");
+	TestButton3.SetPosition(460, 10);
+*/
 
 	if (MissionData.Mission.AllowDeployWoundedUnits)
 	{
@@ -254,8 +301,10 @@ simulated function GetIntroAllowed()
 simulated function StartPreMissionCinematic()
 {
 	super.StartPreMissionCinematic();
-	// super didn't start a timer (or the timer expired) -- skip the intro when desired
-	`log("StartPreMissionCinematic");
+
+	// Skip the intro when desired
+	// Note: the timer will only expire after this function returns. For now,
+	// bIsFocused mirrors the check in super. Keep this code in sync!
 	if (bIsFocused /* <==> !IsTimerActive(nameof(StartPreMissionCinematic))*/)
 	{
 		if (bInstantLineupUI)
@@ -281,7 +330,6 @@ simulated function FinishIntroCinematic()
 		if(MatineeObject.ObjComment ~= "Soldier lineup camera")
 		{
 			Matinee = SeqAct_Interp(MatineeObject);
-			`log(`showvar(Matinee.bIsPlaying));
 			SetFireEventsWhenJumpingForwards(Matinee.InterpData);
 			if (Matinee.bIsPlaying)
 			{
@@ -858,7 +906,8 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 	{
 		return false;
 	}
-	if ( SquadList.OnUnrealCommand(cmd, arg) )
+
+	if ( CurrentlyNavigatingPanel.OnUnrealCommand(cmd, arg) )
 		return true;
 		
 	// Only pay attention to presses or repeats; ignoring other input types
@@ -898,13 +947,10 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 				SwitchPerspective();
 			}
 			break;
-/*
-`if(`notdefined(FINAL_RELEASE))
+
 		case class'UIUtilities_Input'.const.FXS_BUTTON_SELECT:
-			OnSimCombat();
+			OnCycleExtraPanels();
 			break;
-`endif
-*/
 		case class'UIUtilities_Input'.const.FXS_BUTTON_R3:
 			if (`ISCONTROLLERACTIVE)
 			{
@@ -928,6 +974,30 @@ simulated function bool OnUnrealCommand(int cmd, int arg)
 	}
 
 	return bHandled || super(UIScreen).OnUnrealCommand(cmd, arg);
+}
+
+simulated function OnCycleExtraPanels()
+{
+	local int i;
+	local UIPanel PrevPanel;
+
+	PrevPanel = CurrentlyNavigatingPanel;
+
+	for (i = (GetChildIndex(PrevPanel) + 1) % ChildPanels.Length;
+			/*ChildPanels[i] != PrevPanel &&*/ InStr(ChildPanels[i].Tag, 'rjSquadSelect_Navigable', , true) == INDEX_NONE;
+			i = (i + 1) % ChildPanels.Length)
+	{
+	}
+
+	// Cycle panels
+	if (ChildPanels[i] != PrevPanel)
+	{
+		PrevPanel.DisableNavigation();
+		PrevPanel.OnLoseFocus();
+		CurrentlyNavigatingPanel = ChildPanels[i];
+		CurrentlyNavigatingPanel.EnableNavigation();
+		Navigator.SetSelected(CurrentlyNavigatingPanel);
+	}
 }
 
 simulated function OnUnequipSquad()
@@ -1067,6 +1137,8 @@ static function array<EInventorySlot> GetRelevantSlots()
 		RelevantSlots.AddItem(eInvSlot_GrenadePocket);
 		RelevantSlots.AddItem(eInvSlot_AmmoPocket);
 	}
+
+	return RelevantSlots;
 }
 
 

@@ -630,7 +630,7 @@ simulated function OnLoseFocus()
 	if (TheList != none)
 	{
 		TheList.OnLoseFocus();
-		TheList.GetSelectedItem().OnLoseFocus();
+		//TheList.GetSelectedItem().OnLoseFocus();
 		TheSoldierPanel.RealizeDismissImageState(); // controller
 	}
 	else if (DynamicPanel != none)
