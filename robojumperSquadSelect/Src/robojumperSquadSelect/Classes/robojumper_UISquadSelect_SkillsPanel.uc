@@ -154,7 +154,6 @@ simulated function RemoveSuperfluousAbilities(X2SoldierClassTemplate SoldierClas
 {
 	local array<SoldierClassAbilityType> AbilitiesToRemove;
 	local SoldierClassAbilityType Ability;
-	local SCATProgression ProgressAbility;
 
 	foreach AbilityTree(Ability)
 	{
@@ -181,7 +180,7 @@ simulated function bool IsAnAWCPerk(X2AbilityTemplate Ability, XComGameState_Uni
 
 	local X2SoldierClassTemplate ClassTemplate;
 	local array<SoldierClassAbilityType> SoldierRank;
-	local int i, j;
+	local int i;
 
 	ClassTemplate = Unit.GetSoldierClassTemplate();
 	SoldierRank = ClassTemplate.GetAllPossibleAbilities();

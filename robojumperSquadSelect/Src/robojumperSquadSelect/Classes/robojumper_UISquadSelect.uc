@@ -152,14 +152,14 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	// MAGICK!
 	NewGameState = class'XComGameStateContext_ChangeContainer'.static.CreateChangeState("Squad size adjustment from mission parameters");
 	XComHQ = XComGameState_HeadquartersXCom(NewGameState.CreateStateObject(class'XComGameState_HeadquartersXCom', XComHQ.ObjectID));
-	if (XComHQ.Squad.Length > SoldierSlotCount || XComHQ.AllSquads.Length > 0)
+	if (XComHQ.Squad.Length != SoldierSlotCount || XComHQ.AllSquads.Length > 0)
 	{
 		NewGameState.AddStateObject(XComHQ);
-		CollapseSquad(XComHQ);
-		if (XComHQ.Squad.Length > SoldierSlotCount)
+		if (XComHQ.Squad.Length > SoldierSlotCount && AllowCollapseSquad())
 		{
-			XComHQ.Squad.Length = SoldierSlotCount;
+			CollapseSquad(XComHQ);
 		}
+		XComHQ.Squad.Length = SoldierSlotCount;
 		XComHQ.AllSquads.Length = 0;
 	}
 	// do it like LW2 because why not?
@@ -234,6 +234,7 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	TestList1.Tag = 'rjSquadSelect_Navigable';
 	TestList1.bIsNavigable = false;
 	TestList1.bSelectFirstAvailable = false;
+	TestList1.bStickyHighlight = false;
 	TestList1.InitList('', 20, 10, 200, 400);
 	TestList1.SelectedIndex = 0;
 	TestList1.Navigator.SelectedIndex = 0;
@@ -246,6 +247,7 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	TestList2.Tag = 'rjSquadSelect_Navigable';
 	TestList2.bIsNavigable = false;
 	TestList2.bSelectFirstAvailable = false;
+	TestList2.bStickyHighlight = false;
 	TestList2.InitList('', 240, 10, 200, 400);
 	TestList2.SelectedIndex = 0;
 	TestList2.Navigator.SelectedIndex = 0;
@@ -384,6 +386,22 @@ simulated function bool AllowAutoFilling()
 
 	return Tuple.Data[0].b;
 }
+
+simulated function bool AllowCollapseSquad()
+{
+	local LWTuple Tuple;
+
+	Tuple = new class'LWTuple';
+	Tuple.Id = 'rjSquadSelect_AllowCollapseSquad';
+	Tuple.Data.Add(1);
+	Tuple.Data[0].kind = LWTVBool;
+	Tuple.Data[0].b = true;
+
+	`XEVENTMGR.TriggerEvent('rjSquadSelect_AllowCollapseSquad', Tuple, Tuple, none);
+
+	return Tuple.Data[0].b;
+}
+
 
 function CreateOrUpdateLaunchButton()
 {
@@ -1211,9 +1229,6 @@ function GoToGeoscape()
 
 function ShowLineupUI()
 {
-	local int l, r, visSlots, shownSlots;
-	local float AnimateRate, AnimateValue;
-
 	bReceivedWalkupEvent = true; 
 	CheckForWalkupAlerts();
 
@@ -1222,43 +1237,21 @@ function ShowLineupUI()
 	Show();
 	UpdateNavHelp();
 
-	AnimateRate = 0.2;
-	AnimateValue = 0.0;
-	visSlots = Min(6, SoldierSlotCount);
-	shownSlots = 0;
-	// odd, so animate centered first
-	if (visSlots % 2 == 1)
+	SquadList.bInstantLineupUI = bInstantLineupUI;
+	AnimateChildPanels();
+}
+
+function AnimateChildPanels()
+{
+	local int i;
+
+	for (i = 0; i < ChildPanels.Length; i++)
 	{
-		l = visSlots / 2;
-		r = l;
-		UISquadSelect_ListItem(SquadList.GetItem(l)).AnimateIn(bInstantLineupUI ? 0.0 : AnimateValue);
-		AnimateValue += AnimateRate;
-		l--;
-		r++;
-		shownSlots++;
-	}
-	else
-	{
-		r = visSlots / 2;
-		l = r - 1;
-	}
-	// since all remaining slots are now an even number, we are guaranteed to not hit a slot twice
-	while (shownSlots < SoldierSlotCount)
-	{
-		if (r >= SoldierSlotCount)
+		// Screens own their recursive children. Explicitly check here!
+		if (ChildPanels[i].ParentPanel == self)
 		{
-			r = 0;
+			ChildPanels[i].AnimateIn();
 		}
-		UISquadSelect_ListItem(SquadList.GetItem(r)).AnimateIn(bInstantLineupUI ? 0.0 : AnimateValue);
-		r++;
-		if (l < 0)
-		{
-			l = SoldierSlotCount - 1;
-		}
-		UISquadSelect_ListItem(SquadList.GetItem(l)).AnimateIn(bInstantLineupUI ? 0.0 : AnimateValue);
-		l--;
-		AnimateValue += AnimateRate;
-		shownSlots += 2;
 	}
 }
 

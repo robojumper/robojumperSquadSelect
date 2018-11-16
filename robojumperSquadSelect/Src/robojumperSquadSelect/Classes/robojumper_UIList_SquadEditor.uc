@@ -20,6 +20,8 @@ var protected int visibleChildren;
 
 var protected bool bDisAllowInfiniteScrolling;
 
+var bool bInstantLineupUI;
+
 delegate float GetScrollDelegate();
 delegate float GetScrollGoalDelegate();
 delegate ScrollCallback(float fScroll);
@@ -240,6 +242,50 @@ simulated function OnLoseFocus()
 	}
 }
 
+simulated function AnimateIn(optional float Delay = -1.0)
+{
+	local int l, r, visSlots, shownSlots;
+	local float AnimateRate, AnimateValue;
+
+	AnimateRate = 0.2;
+	AnimateValue = 0.0;
+	visSlots = Min(6, GetItemCount());
+	shownSlots = 0;
+	// odd, so animate centered first
+	if (visSlots % 2 == 1)
+	{
+		l = visSlots / 2;
+		r = l;
+		GetItem(l).AnimateIn(bInstantLineupUI ? 0.0 : AnimateValue);
+		AnimateValue += AnimateRate;
+		l--;
+		r++;
+		shownSlots++;
+	}
+	else
+	{
+		r = visSlots / 2;
+		l = r - 1;
+	}
+	// since all remaining slots are now an even number, we are guaranteed to not hit a slot twice
+	while (shownSlots < GetItemCount())
+	{
+		if (r >= GetItemCount())
+		{
+			r = 0;
+		}
+		GetItem(r).AnimateIn(bInstantLineupUI ? 0.0 : AnimateValue);
+		r++;
+		if (l < 0)
+		{
+			l = GetItemCount() - 1;
+		}
+		GetItem(l).AnimateIn(bInstantLineupUI ? 0.0 : AnimateValue);
+		l--;
+		AnimateValue += AnimateRate;
+		shownSlots += 2;
+	}
+}
 
 simulated function bool OnUnrealCommand(int cmd, int arg)
 {
