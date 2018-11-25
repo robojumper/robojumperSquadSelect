@@ -1250,7 +1250,7 @@ function AnimateChildPanels()
 		// Screens own their recursive children. Explicitly check here!
 		if (ChildPanels[i].ParentPanel == self)
 		{
-			ChildPanels[i].AnimateIn();
+			ChildPanels[i].AnimateIn(0);
 		}
 	}
 }
