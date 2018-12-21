@@ -2,6 +2,8 @@
 strSwitchPerspective=Switch View
 strSwitchPerspectiveTooltip=Switch between the overview and the normal perspective.
 
+strCycleLists=Cycle Lists
+
 strUnequipSquad=Unequip Squad
 strUnequipSquadTooltip=Strip gear and equipment from all units currently selected for the mission.
 strUnequipSquadConfirm=Confirm unequip squad

@@ -42,6 +42,7 @@ var bool bInfiniteScrollingDisallowed;
 ///////////////////////////////////////////
 var localized string strSwitchPerspective;
 var localized string strSwitchPerspectiveTooltip;
+var localized string strCycleLists;
 
 var localized string strUnequipSquad, strUnequipBarracks; // nav help
 var localized string strUnequipSquadTooltip, strUnequipBarracksTooltip; // nav help tooltip
@@ -700,6 +701,48 @@ simulated function UpdateData(optional bool bFillSquad)
 }
 
 
+// Overrides super: Cut some weird code.
+simulated function ChangeSlot(optional StateObjectReference UnitRef)
+{
+	local StateObjectReference PrevUnitRef;
+	local XComGameState_MissionSite MissionState;
+
+	// Make sure we create the update state before changing XComHQ
+	if(UpdateState == none)
+		CreatePendingStates();
+
+	PrevUnitRef = XComHQ.Squad[m_iSelectedSlot];
+
+	// remove modifications to previous selected unit
+	if(PrevUnitRef.ObjectID > 0)
+	{
+		m_kPawnMgr.ReleaseCinematicPawn(self, PrevUnitRef.ObjectID);
+	}
+
+	PendingSoldier = UnitRef;
+	
+	XComHQ.Squad[m_iSelectedSlot] = UnitRef;
+
+	StoreGameStateChanges();
+
+	MissionState = GetMissionState();
+	if (MissionState.GetMissionSource().RequireLaunchMissionPopupFn != none && MissionState.GetMissionSource().RequireLaunchMissionPopupFn(MissionState))
+	{
+		// If the mission source requires a unique launch mission warning popup which has not yet been displayed, show it now
+		if (!MissionState.bHasSeenLaunchMissionWarning)
+		{
+			`HQPRES.UILaunchMissionWarning(MissionState);
+		}
+	}
+
+	bDirty = true;
+	UpdateData();
+
+	Movie.Pres.PlayUISound(eSUISound_MenuSelect); //bsg-crobinson (5.18.17): Add sound on select soldier
+}
+
+
+
 
 simulated function int GetTotalSlots()
 {
@@ -727,6 +770,10 @@ simulated function UpdateNavHelp()
 		if (`ISCONTROLLERACTIVE)
 		{
 			NavHelp.AddLeftStackHelp(class'UIPauseMenu'.default.m_sControllerMap, class'UIUtilities_Input'.static.GetGamepadIconPrefix() $ class'UIUtilities_Input'.const.ICON_RSCLICK_R3);
+			if (HasMultipleNavigables())
+			{
+				NavHelp.AddLeftStackHelp(default.strCycleLists, class'UIUtilities_Input'.static.GetGamepadIconPrefix() $ class'UIUtilities_Input'.const.ICON_BACK_SELECT);
+			}
 		}
 
 		if (!bNoCancel || (XComHQ.AllSquads.Length > 0 && XComHQ.AllSquads.Length < (SquadCount)))
@@ -802,6 +849,21 @@ simulated function UpdateNavHelp()
 `endif
 */
 	}
+}
+
+simulated function bool HasMultipleNavigables()
+{
+	local int i, count;
+	count = 0;
+
+	for (i = 0; i < ChildPanels.Length; i++)
+	{
+		if (InStr(ChildPanels[i].Tag, 'rjSquadSelect_Navigable', , true) != INDEX_NONE)
+		{
+			count += 1;
+		}
+	}
+	return count > 1;
 }
 
 simulated function OnNextSquad(UIButton Button)
@@ -888,7 +950,7 @@ simulated function CloseScreenInternal()
 
 		StoreGameStateChanges();
 
-		UpdateData(true);
+		UpdateData();
 		CreateOrUpdateLaunchButton();
 	}
 	else

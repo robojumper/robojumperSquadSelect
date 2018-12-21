@@ -27,7 +27,7 @@ simulated function LoadDefaultSquadSelect()
 	UIGamePad[4].label = class'UIUtilities_Text'.default.m_strGenericNavigate;
 	UIGamePad[5].label = class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(m_sPanCameraHQ);
 	UIGamePad[6].label = class'UIUtilities_Text'.default.m_strGenericNavigate;           // dpad left/right
-	UIGamePad[7].label = m_sUnused;
+	UIGamePad[7].label = class'robojumper_UISquadSelect'.default.strCycleLists;
 	UIGamePad[8].label = class'UISquadSelect'.default.m_strLaunch @ class'UISquadSelect'.default.m_strMission;
 	UIGamePad[9].label = class'UISquadSelect'.default.m_strBuildItems;
 	UIGamePad[10].label = class'UIUtilities_Text'.static.CapsCheckForGermanScharfesS(class'robojumper_UISquadSelect'.default.strSwitchPerspective);
