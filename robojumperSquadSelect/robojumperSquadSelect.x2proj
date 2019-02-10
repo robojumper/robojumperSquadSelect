@@ -138,4 +138,9 @@
     <Content Include="Src\robojumperSquadSelect\Classes\X2DownloadableContentInfo_robojumperSquadSelect.uc" />
   </ItemGroup>
   <Import Project="$(MSBuildLocalExtensionPath)\XCOM2.targets" />
+  <Target Name="RenameModFile" AfterTargets="Build">
+    <Message Importance="High" Text="Renaming mod info..." />
+    <Move SourceFiles="$(XCOM2_UserPath)/Mods/robojumperSquadSelect/robojumperSquadSelect.XComMod" DestinationFiles="$(XCOM2_UserPath)/Mods/robojumperSquadSelect/robojumperSquadSelect_WotC.XComMod" />
+    <Move SourceFiles="$(XCOM2_GamePath)/Mods/robojumperSquadSelect/robojumperSquadSelect.XComMod" DestinationFiles="$(XCOM2_GamePath)/Mods/robojumperSquadSelect/robojumperSquadSelect_WotC.XComMod" />
+  </Target>
 </Project>
