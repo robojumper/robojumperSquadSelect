@@ -848,6 +848,8 @@ simulated function UpdateNavHelp()
 		}	
 `endif
 */
+		
+		`XEVENTMGR.TriggerEvent('UISquadSelect_NavHelpUpdate', NavHelp, self, none);
 	}
 }
 
