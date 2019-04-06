@@ -198,28 +198,8 @@ simulated function SetupItemsHighlander()
 		}
 	}
 
-	// Layout
-	// integer division
-	for (i = 0; i < NumSmall / MAX_SMALLITEMS_IN_ROW; i++)
-	{
-		SmallItemLayout.AddItem(MAX_SMALLITEMS_IN_ROW);
-	}
-	if (NumSmall % MAX_SMALLITEMS_IN_ROW != 0)
-	{
-		SmallItemLayout.AddItem(NumSmall % MAX_SMALLITEMS_IN_ROW);
-	}
-	
-	// if we have at least two rows, even out the last two rows
-	if (SmallItemLayout.Length > 1)
-	{
-		// move an item slot from the upper row to the lower row while their difference is larger than 1
-		// we will end with either the top row having 1 more slot than or the same number of slots as the lower row
-		while (SmallItemLayout[SmallItemLayout.Length - 2] - SmallItemLayout[SmallItemLayout.Length - 1] > 1)
-		{
-			SmallItemLayout[SmallItemLayout.Length - 1]++;
-			SmallItemLayout[SmallItemLayout.Length - 2]--;
-		}
-	}
+	SmallItemLayout = SetupLayout(NumSmall);
+
 	iCurrInRow = 0;
 	iCurrRow = 0;
 	for (i = 0; i < NumSmall; i++)
@@ -232,6 +212,25 @@ simulated function SetupItemsHighlander()
 			iCurrRow++;
 		}
 	}
+}
+
+simulated function array<int> SetupLayout(int NumSmall)
+{
+	local array<int> SmallItemLayout;
+	local int NumRows, i;
+
+	NumRows = FCeil(float(NumSmall) / float(MAX_SMALLITEMS_IN_ROW));
+	for (i = 0; i < NumRows; i++)
+	{
+		SmallItemLayout.AddItem(NumSmall / NumRows);
+	}
+
+	for (i = 0; i < NumSmall - ((NumSmall / NumRows) * NumRows); i++)
+	{
+		SmallItemLayout[i]++;
+	}
+
+	return SmallItemLayout;
 }
 
 // Sets up the items regularly
@@ -277,27 +276,8 @@ simulated function SetupItemsRegular()
 	if (Unit.HasAmmoPocket()) iSmallItemSlots++;
 	if (Unit.HasGrenadePocket()) iSmallItemSlots++;
 	
-	// integer division
-	for (i = 0; i < iSmallItemSlots / MAX_SMALLITEMS_IN_ROW; i++)
-	{
-		SmallItemLayout.AddItem(MAX_SMALLITEMS_IN_ROW);
-	}
-	if (iSmallItemSlots % MAX_SMALLITEMS_IN_ROW != 0)
-	{
-		SmallItemLayout.AddItem(iSmallItemSlots % MAX_SMALLITEMS_IN_ROW);
-	}
-	
-	// if we have at least two rows, even out the last two rows
-	if (SmallItemLayout.Length > 1)
-	{
-		// move an item slot from the upper row to the lower row while their difference is larger than 1
-		// we will end with either the top row having 1 more slot than or the same number of slots as the lower row
-		while (SmallItemLayout[SmallItemLayout.Length - 2] - SmallItemLayout[SmallItemLayout.Length - 1] > 1)
-		{
-			SmallItemLayout[SmallItemLayout.Length - 1]++;
-			SmallItemLayout[SmallItemLayout.Length - 2]--;
-		}
-	}
+	SmallItemLayout = SetupLayout(iSmallItemSlots);
+
 	iCurrInRow = 0;
 	iCurrRow = 0;
 	iThisSmallItem = 0;
