@@ -54,13 +54,6 @@ var bool bSkipFinalMissionCutscenes;
 var bool bSkipDirty;
 var bool bInstantLineupUI;
 
-/*
-// Example code, will take out later
-var UIList TestList1;
-var UIList TestList2;
-var UIButton TestButton3;
-*/
-
 // Constructor
 simulated function InitScreen(XComPlayerController InitController, UIMovie InitMovie, optional name InitName)
 {
@@ -221,47 +214,6 @@ simulated function InitScreen(XComPlayerController InitController, UIMovie InitM
 	UpdateSitRep();
 
 	GetIntroAllowed();
-
-
-/*
-	// Example code, will take out later:
-	// First things first, you need to mark it with a Tag of
-	// 'rjSquadSelect_Navigable' but don't make it actually navigable
-	// Second, you need to prepare it so that it's ready to navigate as
-	// soon as it gets focus, but doesn't focus anything before that.
-	// This is here achieved by manually setting the SelectedIndex
-	// and making it not select any item automatically (bSelectFirstAvailable)
-	TestList1 = Spawn(class'UIList', self);
-	TestList1.Tag = 'rjSquadSelect_Navigable';
-	TestList1.bIsNavigable = false;
-	TestList1.bSelectFirstAvailable = false;
-	TestList1.bStickyHighlight = false;
-	TestList1.InitList('', 20, 10, 200, 400);
-	TestList1.SelectedIndex = 0;
-	TestList1.Navigator.SelectedIndex = 0;
-	UIListItemString(TestList1.CreateItem()).InitListItem("1-1");
-	UIListItemString(TestList1.CreateItem()).InitListItem("1-2");
-	UIListItemString(TestList1.CreateItem()).InitListItem("1-3");
-	UIListItemString(TestList1.CreateItem()).InitListItem("1-4");
-
-	TestList2 = Spawn(class'UIList', self);
-	TestList2.Tag = 'rjSquadSelect_Navigable';
-	TestList2.bIsNavigable = false;
-	TestList2.bSelectFirstAvailable = false;
-	TestList2.bStickyHighlight = false;
-	TestList2.InitList('', 240, 10, 200, 400);
-	TestList2.SelectedIndex = 0;
-	TestList2.Navigator.SelectedIndex = 0;
-	UIListItemString(TestList2.CreateItem()).InitListItem("2-1");
-	UIListItemString(TestList2.CreateItem()).InitListItem("2-2");
-	UIListItemString(TestList2.CreateItem()).InitListItem("2-3");
-
-	TestButton3 = Spawn(class'UIButton', self);
-	TestButton3.Tag = 'rjSquadSelect_Navigable';
-	TestButton3.bIsNavigable = false;
-	TestButton3.InitButton('', "Test Button");
-	TestButton3.SetPosition(460, 10);
-*/
 
 	if (MissionData.Mission.AllowDeployWoundedUnits)
 	{
