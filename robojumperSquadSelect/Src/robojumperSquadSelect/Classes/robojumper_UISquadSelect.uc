@@ -1617,7 +1617,7 @@ simulated function OnLoseFocus()
 // don't repopulate everything if it's just a mission warning, such as "allow wounded soldiers" etc.
 simulated function LostFocusWaitForStack()
 {
-	if (`SCREENSTACK.GetCurrentScreen().IsA('UIAlert'))
+	if (`SCREENSTACK.GetCurrentScreen().IsA('UIAlert') && `SCREENSTACK.GetFirstInstanceOf(class'UIArmory') == none)
 		bSkipDirty = true;
 }
 
