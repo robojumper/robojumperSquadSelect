@@ -14,6 +14,10 @@ var config array<name> ClassesExcemptFromRankFiltering;
 // for alternative skill trees, specifiy rank 0 abilities here to hide them if the user wants to
 var config array<name> AdditionalRankZeroAbilities;
 
+// Issue #10: Forces use of HQPRES to display the Training Center screen in case a
+// mod overrides the default one.
+var config bool bUseHighlanderForPromotionUI;
+
 struct AbilityColorData
 {
 	var X2AbilityTemplate Template;
@@ -267,8 +271,15 @@ simulated function OnTrainingCenterButtonClicked(UIButton Button)
 	{
 		if( FacilityState.GetMyTemplateName() == 'RecoveryCenter' && !FacilityState.IsUnderConstruction() )
 		{
-			PromotionUI = UIArmory_PromotionHero(Movie.Stack.Push(Spawn(class'UIArmory_PromotionHero', self), Movie.Pres.Get3DMovie()));
-			PromotionUI.InitPromotion(GetUnit().GetReference(), false);
+			if (bUseHighlanderForPromotionUI)
+			{
+				`HQPRES.ShowPromotionUI(GetUnit().GetReference());
+			}
+			else
+			{
+				PromotionUI = UIArmory_PromotionHero(Movie.Stack.Push(Spawn(class'UIArmory_PromotionHero', self), Movie.Pres.Get3DMovie()));
+				PromotionUI.InitPromotion(GetUnit().GetReference(), false);
+			}
 			return;
 		}
 	}
