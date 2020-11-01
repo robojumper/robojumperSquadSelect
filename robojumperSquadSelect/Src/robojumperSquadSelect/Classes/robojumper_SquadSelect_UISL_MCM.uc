@@ -11,6 +11,7 @@ var localized string strGroupTitle;
 
 var localized string strShowWeaponUpgradeIcons, strSkipSecondaryUpgradeIconsAvailable, strShowBGImages, strShowMeTheSkills, strSkipInitialAbilities, strAutofillSquad, strShowStats, strDisallowInfiniteScrolling, strSkipIntro;
 var localized string strHideTrainingCenterButton;
+var localized string strOpenWeaponUpgradeWithController;
 
 var localized string strSquadSize;
 var config int iSquadSizeMin, iSquadSizeMax;
@@ -20,6 +21,7 @@ var config array<name> SpawnPointFixingMods;
 
 var bool bShowWeaponUpgradeIcons, bSkipSecondaryUpgradeIconsAvailable, bShowBGImages, bShowMeTheSkills, bSkipInitialAbilities, bAutofillSquad, bShowMeTheStats, bDisallowInfiniteScrolling, bSkipIntro;
 var bool bHideTrainingCenterButton;
+var bool bOpenWeaponUpgradeWithController;
 
 
 var int ch_iMaxSoldiers;
@@ -34,6 +36,7 @@ const AUTO_FILL_SQUAD = 'autofillSquad';
 const DISALLOW_INFINITE_SCROLL = 'disallowScrolling';
 const SKIP_INTRO = 'skipIntro';
 const HIDE_TRAINING_CENTER = 'hideTrainingCenter';
+const OPEN_WEAPON_UPGRADE_WITH_CONTROLLER = 'openWeaponUpgradeWithController';
 
 event OnInit(UIScreen Screen)
 {
@@ -62,6 +65,7 @@ simulated function ClientModCallback(MCM_API_Instance ConfigAPI, int GameMode)
 	bAutofillSquad = class'robojumper_SquadSelectConfig'.static.ShouldAutoFillSquad();
 	bDisallowInfiniteScrolling = class'robojumper_SquadSelectConfig'.static.DisAllowInfiniteScrolling();
 	bHideTrainingCenterButton = class'robojumper_SquadSelectConfig'.static.HideTrainingCenterButton();
+	bOpenWeaponUpgradeWithController = class'robojumper_SquadSelectConfig'.static.OpenWeaponUpgradeWithController();
 
 	ch_iMaxSoldiers = class'robojumper_SquadSelectConfig'.static.GetSquadSize();
 
@@ -83,6 +87,7 @@ simulated function ClientModCallback(MCM_API_Instance ConfigAPI, int GameMode)
 	
 	Group.AddCheckbox(DISALLOW_INFINITE_SCROLL, strDisallowInfiniteScrolling, "", bDisallowInfiniteScrolling, , CheckboxSaveHandler);
 
+	Group.AddCheckbox(OPEN_WEAPON_UPGRADE_WITH_CONTROLLER, strOpenWeaponUpgradeWithController, "", bOpenWeaponUpgradeWithController, , CheckboxSaveHandler);
 	
 	if (!class'X2DownloadableContentInfo_robojumperSquadSelect'.default.bDontTouchSquadSize)
 	{
@@ -133,6 +138,9 @@ simulated function CheckboxSaveHandler(MCM_API_Setting _Setting, bool _SettingVa
 		case SKIP_INTRO:
 			bSkipIntro = _SettingValue;
 			break;
+		case OPEN_WEAPON_UPGRADE_WITH_CONTROLLER:
+			bOpenWeaponUpgradeWithController = _SettingValue;
+			break;
 		default:
 			assert(false);
 	}
@@ -158,6 +166,7 @@ simulated function SaveButtonClicked(MCM_API_SettingsPage Page)
 	DefObj.bHideTrainingCenterButton = bHideTrainingCenterButton;
 	DefObj.bDisallowInfiniteScrolling = bDisallowInfiniteScrolling;
 	DefObj.bSkipIntro = bSkipIntro;
+	DefObj.bOpenWeaponUpgradeWithController = bOpenWeaponUpgradeWithController;
 	DefObj.iSquadSize = ch_iMaxSoldiers;
 	class'robojumper_SquadSelectConfig'.static.StaticSaveConfig();
 	// internally guarded

@@ -4,12 +4,14 @@ class robojumper_SquadSelectConfig extends Object config(robojumperSquadSelect_N
 
 var config bool bShowWeaponUpgradeIcons, bSkipSecondaryUpgradeIconsAvailable, bShowBGImages, bShowMeTheSkills, bSkipInitialAbilities, bAutofillSquad, bShowStats, bDisallowInfiniteScrolling, bSkipIntro;
 var config bool bHideTrainingCenterButton;
+var config bool bOpenWeaponUpgradeWithController;
 
 var config int iSquadSize;
 var config int iVersion;
 
 var bool bShowWeaponUpgradeIcons_def, bSkipSecondaryUpgradeIconsAvailable_def, bShowBGImages_def, bShowMeTheSkills_def, bSkipInitialAbilities_def, bAutofillSquad_def, bShowStats_def, bDisallowInfiniteScrolling_def, bSkipIntro_def;
 var bool bHideTrainingCenterButton_def;
+var bool bOpenWeaponUpgradeWithController_def;
 
 var int iVersion_def;
 
@@ -31,6 +33,7 @@ static function Initialize()
 		DefaultObj.bDisallowInfiniteScrolling = default.bDisallowInfiniteScrolling_def;
 		DefaultObj.bSkipIntro = default.bSkipIntro_def;
 		DefaultObj.bHideTrainingCenterButton = default.bHideTrainingCenterButton_def;
+		DefaultObj.bOpenWeaponUpgradeWithController = default.bOpenWeaponUpgradeWithController_def;
 		// messes with LW2
 		if (!class'X2DownloadableContentInfo_robojumperSquadSelect'.default.bDontTouchSquadSize)
 		{
@@ -107,6 +110,11 @@ static function bool HideTrainingCenterButton()
 	return default.bHideTrainingCenterButton;	
 }
 
+static function bool OpenWeaponUpgradeWithController()
+{
+	return default.bOpenWeaponUpgradeWithController;
+}
+
 static function bool IsCHHLMinVersionInstalled(int iMajor, int iMinor)
 {
 	local X2StrategyElementTemplate VersionTemplate;
@@ -136,6 +144,7 @@ defaultproperties
 	bDisallowInfiniteScrolling_def=false
 	bSkipIntro_def=false
 	bHideTrainingCenterButton_def=false
+	bOpenWeaponUpgradeWithController_def=false
 
 	iVersion_def=1
 }

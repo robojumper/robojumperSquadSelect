@@ -666,12 +666,45 @@ simulated function OnClickedEditUnitButton()
 	
 	if( XComHQ.Squad[SquadScreen.m_iSelectedSlot].ObjectID > 0 )
 	{
+		// If the X button was clicked, and OpenWeaponUpgradeWithController is true, we will either :
+		// 1A.] Open a primary weapon's upgrade screen, if one was selected and it is upgradeable.
+		// 1B.] Open a soldier's menu, if anything else was selected.
+		if (`ISCONTROLLERACTIVE && class'robojumper_SquadSelectConfig'.static.OpenWeaponUpgradeWithController() && OnClickedEditWeaponUpgrade())
+		{
+			return;
+		}
+
 		//UISquadSelect(Screen).bDirty = true;
 		SetDirty(true);
 //		SquadScreen.SnapCamera();
 		`HQPRES.UIArmory_MainMenu(XComHQ.Squad[SquadScreen.m_iSelectedSlot]);//, 'PreM_CustomizeUI', 'PreM_SwitchToSoldier', 'PreM_GoToLineup', 'PreM_CustomizeUI_Off', 'PreM_SwitchToLineup');
 //		`XCOMGRI.DoRemoteEvent('PreM_GoToSoldier');
 	}
+}
+
+simulated function bool OnClickedEditWeaponUpgrade()
+{
+	local robojumper_UISquadSelect_EquipItem SelectedEquipItem;
+	local X2WeaponTemplate TheWeaponTemplate;
+	local XComGameState_Item TheItem;
+	
+	SelectedEquipItem = robojumper_UISquadSelect_EquipItem(TheList.GetSelectedItem());
+	
+	// We are only interested in the primary weapon panel.
+	if ((SelectedEquipItem != none) && (SelectedEquipItem.InvSlot == eInvSlot_PrimaryWeapon) && 
+		(SelectedEquipItem.ItemStateRef.ObjectID > 0))
+	{
+		TheItem = XComGameState_Item(`XCOMHISTORY.GetGameStateForObjectID(SelectedEquipItem.ItemStateRef.ObjectID));
+		TheWeaponTemplate = X2WeaponTemplate(TheItem.GetMyTemplate());
+		// We are only interested in weapons with at least 1 weapon upgrade slot.
+		if ((TheWeaponTemplate != none) && (TheWeaponTemplate.NumUpgradeSlots > 0))
+		{
+			SelectedEquipItem.OnClickedUpgradeIcon();
+			return true;
+		}
+	}
+
+	return false;
 }
 
 simulated function OnClickedPromote()
