@@ -20,7 +20,7 @@ strLabel="Выбрать отряд"
 strGroupTitle="Общие настройки"
 
 strShowWeaponUpgradeIcons=Показать иконки улучшений.
-strSkipSecondaryUpgradeIconsAvailable=Upgrade Icons Only For Primaries
+strSkipSecondaryUpgradeIconsAvailable=Иконки улучшений для основных оружий.
 strShowBGImages=Показать фоновые изображения предметов.
 strShowMeTheSkills=Показать способности
 strShowStats=Показать характеристики
