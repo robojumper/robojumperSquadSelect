@@ -4,12 +4,12 @@ strSwitchPerspectiveTooltip=Переключение обзора.
 
 strCycleLists=Cycle Lists
 
-strUnequipSquad=Снять экипировку с отряда
+strUnequipSquad=Снять c отряда
 strUnequipSquadTooltip=Снять экипировку со всех солдат, выбранных для этой миссии.
 strUnequipSquadConfirm=Подтвердить снятие экипировки с отряда.
 strUnequipSquadWarning=Снятие всего снаряжения с солдат выбранных для этой миссии. Это позволит применить снятое снаряжение для других солдат немедленно.
 
-strUnequipBarracks=Снять экипировку с казармы
+strUnequipBarracks=Снять с казармы
 strUnequipBarracksTooltip=Снять снаряжение для всех солдат НЕ выбранных для этой миссии.
 strUnequipBarracksConfirm=Подтвердить снятие экипировки с казармы
 strUnequipBarracksWarning=Снятие экипировки со всех солдат, НЕ выбранных для этой миссии. Снятое снаряжение можно сразу использовать.
