@@ -1591,12 +1591,12 @@ simulated function OnReceiveFocus()
 	// fix ported from WotC
 	// When the screen gains focus in some rare case, NavHelp needs something inside it before it clears, otherwise the clear is ignored (for some reason)
 	`HQPRES.m_kAvengerHUD.NavHelp.AddLeftHelp("");
-	UpdateNavHelp();
 
 	if(bDirty) 
 	{
 		UpdateData();
 	}
+	UpdateNavHelp();
 
 }
 

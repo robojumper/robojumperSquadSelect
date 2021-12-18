@@ -39,6 +39,10 @@ static function PatchSquadSize()
 	{
 		class'X2StrategyGameRulesetDataStructures'.default.m_iMaxSoldiersOnMission = class'robojumper_SquadSelectConfig'.static.GetSquadSize();
 	}
+	else
+	{
+		`log("RJSS: Not touching squad size because third-party mod wants to handle squad size itself");
+	}
 }
 
 static function ChangeAttachmentGraphics()

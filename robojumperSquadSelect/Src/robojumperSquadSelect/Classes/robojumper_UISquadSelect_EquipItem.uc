@@ -232,22 +232,17 @@ simulated function GetUpgradeInfo(XComGameState_Item Item, EInventorySlot inInvS
 	// empty slots, but only if we are primary or the user wants to explicitely see them
 	if (inInvSlot == eInvSlot_PrimaryWeapon || !class'robojumper_SquadSelectConfig'.static.DontShowSecondaryUpgradeIconsAvailable())
 	{
-		// keep in sync with UIArmory_WeaponUpgrade.UpdateSlots(). Thanks Firaxis
-		totalslots = 0;
-		if (X2WeaponTemplate(Item.GetMyTemplate()) != none)
+		totalslots = GetBaseNumUpgradeSlots(Item);
+		// this is not checked in UIArmory_WeaponUpgrade but in UIArmory_MainMenu essentially (via UIUtilities_Strategy.GetWeaponUpgradeAvailability())
+		if (totalSlots > 0)
 		{
-			totalSlots = X2WeaponTemplate(Item.GetMyTemplate()).NumUpgradeSlots;
-			// this is not checked in UIArmory_WeaponUpgrade but in UIArmory_MainMenu essentially (via UIUtilities_Strategy.GetWeaponUpgradeAvailability())
-			if (totalSlots > 0)
+			if (`XCOMHQ.bExtraWeaponUpgrade)
 			{
-				if (`XCOMHQ.bExtraWeaponUpgrade)
-				{
-					totalSlots++;
-				}
-				if (`XCOMHQ.ExtraUpgradeWeaponCats.Find(X2WeaponTemplate(Item.GetMyTemplate()).WeaponCat) != INDEX_NONE)
-				{
-					totalSlots++;
-				}
+				totalSlots++;
+			}
+			if (`XCOMHQ.ExtraUpgradeWeaponCats.Find(X2WeaponTemplate(Item.GetMyTemplate()).WeaponCat) != INDEX_NONE)
+			{
+				totalSlots++;
 			}
 		}
 		filledimages = Images.Length;
@@ -257,6 +252,24 @@ simulated function GetUpgradeInfo(XComGameState_Item Item, EInventorySlot inInvS
 			Names.AddItem("");
 			Descs.AddItem("");
 		}
+	}
+}
+
+
+// keep in sync with UIArmory_WeaponUpgrade.UpdateSlots(). Thanks Firaxis
+simulated function int GetBaseNumUpgradeSlots(XComGameState_Item ItemState)
+{
+	if (class'robojumper_SquadSelectConfig'.static.IsCHHLMinVersionInstalled(1, 22))
+	{
+		return ItemState.GetNumUpgradeSlots();
+	}
+	else if (X2WeaponTemplate(ItemState.GetMyTemplate()) != none)
+	{
+		return X2WeaponTemplate(ItemState.GetMyTemplate()).NumUpgradeSlots;
+	}
+	else
+	{
+		return 0;
 	}
 }
 
