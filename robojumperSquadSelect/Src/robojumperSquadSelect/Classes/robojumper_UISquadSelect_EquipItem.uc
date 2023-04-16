@@ -194,6 +194,8 @@ simulated function GetUpgradeInfo(XComGameState_Item Item, EInventorySlot inInvS
 	local int i, j, totalslots, filledimages;
 	local array<X2WeaponUpgradeTemplate> Upgrades;
 	local string strBest;
+	local X2WeaponTemplate WeaponTemplate;
+
 	Upgrades = Item.GetMyWeaponUpgradeTemplates();
 	for (i = 0; i < Upgrades.Length; i++)
 	{
@@ -229,22 +231,20 @@ simulated function GetUpgradeInfo(XComGameState_Item Item, EInventorySlot inInvS
 		Descs.AddItem(Item.GetUpgradeEffectForUI(Upgrades[i]));
 		
 	}
-	// empty slots, but only if we are primary or the user wants to explicitely see them
-	if (inInvSlot == eInvSlot_PrimaryWeapon || !class'robojumper_SquadSelectConfig'.static.DontShowSecondaryUpgradeIconsAvailable())
+	// empty slots, but only if the weapon can have them
+	if (class'robojumper_SquadSelect_Helpers'.static.CanHaveWeaponUpgrades(Item))
 	{
-		totalslots = GetBaseNumUpgradeSlots(Item);
-		// this is not checked in UIArmory_WeaponUpgrade but in UIArmory_MainMenu essentially (via UIUtilities_Strategy.GetWeaponUpgradeAvailability())
-		if (totalSlots > 0)
+		totalslots = class'robojumper_SquadSelect_Helpers'.static.GetBaseNumUpgradeSlots(Item);
+		if (`XCOMHQ.bExtraWeaponUpgrade)
 		{
-			if (`XCOMHQ.bExtraWeaponUpgrade)
-			{
-				totalSlots++;
-			}
-			if (`XCOMHQ.ExtraUpgradeWeaponCats.Find(X2WeaponTemplate(Item.GetMyTemplate()).WeaponCat) != INDEX_NONE)
-			{
-				totalSlots++;
-			}
+			totalSlots++;
 		}
+		WeaponTemplate = X2WeaponTemplate(Item.GetMyTemplate());
+		if (WeaponTemplate != none && `XCOMHQ.ExtraUpgradeWeaponCats.Find(WeaponTemplate.WeaponCat) != INDEX_NONE)
+		{
+			totalSlots++;
+		}
+
 		filledimages = Images.Length;
 		for (i = 0; i < totalslots - filledimages; i++)
 		{
@@ -252,24 +252,6 @@ simulated function GetUpgradeInfo(XComGameState_Item Item, EInventorySlot inInvS
 			Names.AddItem("");
 			Descs.AddItem("");
 		}
-	}
-}
-
-
-// keep in sync with UIArmory_WeaponUpgrade.UpdateSlots(). Thanks Firaxis
-simulated function int GetBaseNumUpgradeSlots(XComGameState_Item ItemState)
-{
-	if (class'robojumper_SquadSelectConfig'.static.IsCHHLMinVersionInstalled(1, 22))
-	{
-		return ItemState.GetNumUpgradeSlots();
-	}
-	else if (X2WeaponTemplate(ItemState.GetMyTemplate()) != none)
-	{
-		return X2WeaponTemplate(ItemState.GetMyTemplate()).NumUpgradeSlots;
-	}
-	else
-	{
-		return 0;
 	}
 }
 
@@ -356,11 +338,16 @@ simulated function GoToUtilityItem()
 
 simulated function OnClickedUpgradeIcon()
 {
-	if (`XCOMHQ.bModularWeapons)
+	local XComGameState_Item TheItem;
+	if (ItemStateRef.ObjectID > 0)
 	{
-		UISquadSelect_ListItem(GetParent(class'UISquadSelect_ListItem', true)).SetDirty(true, true);
-		UISquadSelect(Screen).SnapCamera();
-		SetTimer(0.1f, false, nameof(GoToUpgradeScreen));
+		TheItem = XComGameState_Item(`XCOMHISTORY.GetGameStateForObjectID(ItemStateRef.ObjectID));
+		if (class'robojumper_SquadSelect_Helpers'.static.CanHaveWeaponUpgrades(TheItem))
+		{
+			UISquadSelect_ListItem(GetParent(class'UISquadSelect_ListItem', true)).SetDirty(true, true);
+			UISquadSelect(Screen).SnapCamera();
+			SetTimer(0.1f, false, nameof(GoToUpgradeScreen));
+		}
 	}
 }
 

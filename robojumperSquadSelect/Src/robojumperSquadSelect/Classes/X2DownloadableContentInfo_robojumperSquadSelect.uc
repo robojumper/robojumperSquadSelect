@@ -23,6 +23,15 @@ struct NewAttachmentIcon
 
 var config array<NewAttachmentIcon> NewIcons;
 
+struct ModUsesUpgradeSlot
+{
+	var name DLCName;
+	var name ItemCat;
+	var name WeaponCat;
+};
+
+var config array<ModUsesUpgradeSlot> ShowUpgradesWhenModIsInstalled;
+
 /// <summary>
 /// Called after the Templates have been created (but before they are validated) while this DLC / Mod is installed.
 /// </summary>
@@ -31,6 +40,7 @@ static event OnPostTemplatesCreated()
 	class'robojumper_SquadSelectConfig'.static.Initialize();
 	PatchSquadSize();
 	ChangeAttachmentGraphics();
+	AllowUpgradesWhenModIsInstalled();
 }
 
 static function PatchSquadSize()
@@ -69,6 +79,50 @@ static function ChangeAttachmentGraphics()
 			}
 		}
 	}
+}
+
+static function AllowUpgradesWhenModIsInstalled()
+{
+	local robojumper_SquadSelect_Helpers HelpersObj;
+	local ModUsesUpgradeSlot Entry;
+
+	HelpersObj = robojumper_SquadSelect_Helpers(class'XComEngine'.static.GetClassDefaultObject(class'robojumper_SquadSelect_Helpers'));
+
+	foreach default.ShowUpgradesWhenModIsInstalled(Entry)
+	{
+		if (IsDLCNameEnabled(Entry.DLCName))
+		{
+			if (Entry.ItemCat != '')
+			{
+				HelpersObj.UpgradeableItemCats.AddItem(Entry.ItemCat);
+			}
+
+			if (Entry.WeaponCat != '')
+			{
+				HelpersObj.UpgradeableWeaponCats.AddItem(Entry.WeaponCat);
+			}
+		}
+	}
+}
+
+static function bool IsDLCNameEnabled(name TargetDLCName)
+{
+	local int i;
+	local name DLCName;
+	local XComOnlineEventMgr Mgr;
+
+	Mgr = `ONLINEEVENTMGR;
+
+	for (i = Mgr.GetNumDLC() - 1; i >= 0; i--)
+	{
+		DLCName = Mgr.GetDLCNames(i);
+		if (DLCName == TargetDLCName)
+		{
+			return true;
+		}
+	}
+
+	return false;
 }
 
 exec function PushControllerMap()
