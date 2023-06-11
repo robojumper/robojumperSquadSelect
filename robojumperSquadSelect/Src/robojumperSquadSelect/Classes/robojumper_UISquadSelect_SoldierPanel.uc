@@ -259,7 +259,8 @@ static function string GetRankIcon(int iRank, name ClassName, XComGameState_Unit
 {
 	if (Unit.IsSoldier())
 	{
-		if (class'robojumper_SquadSelectConfig'.static.IsCHHLMinVersionInstalled(1, 5))
+		if (class'robojumper_SquadSelectConfig'.static.IsCHHLMinVersionInstalled(1, 18))
+
 		{
 			return Unit.GetSoldierRankIcon(Unit.GetRank());
 		}
